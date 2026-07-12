@@ -7,32 +7,87 @@ const WELCOME = {
   content: "Hi, I'm the TransitOps assistant. Ask me to look up fleet data or take an action — e.g. \"dispatch trip TR012\" or \"how many vehicles are in shop?\" I'll only do what your role allows.",
 };
 
-// Minimal inline-markdown renderer: **bold**, *italic*/_italic_, `code`, line breaks.
+function renderInline(line, keyPrefix) {
+  const tokens = [];
+  const pattern = /(\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_|`([^`]+)`)/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+  while ((match = pattern.exec(line))) {
+    if (match.index > lastIndex) tokens.push(line.slice(lastIndex, match.index));
+    if (match[2] !== undefined) tokens.push(<strong key={`${keyPrefix}-${key++}`}>{match[2]}</strong>);
+    else if (match[3] !== undefined) tokens.push(<em key={`${keyPrefix}-${key++}`}>{match[3]}</em>);
+    else if (match[4] !== undefined) tokens.push(<em key={`${keyPrefix}-${key++}`}>{match[4]}</em>);
+    else if (match[5] !== undefined) tokens.push(<code key={`${keyPrefix}-${key++}`}>{match[5]}</code>);
+    lastIndex = pattern.lastIndex;
+  }
+  if (lastIndex < line.length) tokens.push(line.slice(lastIndex));
+  return tokens;
+}
+
+function isTableSeparatorRow(line) {
+  return /^\s*\|?[\s:|-]+\|?\s*$/.test(line) && line.includes('-');
+}
+
+function parseTableRow(line) {
+  const trimmed = line.trim().replace(/^\|/, '').replace(/\|$/, '');
+  return trimmed.split('|').map((cell) => cell.trim());
+}
+
+// Minimal markdown renderer: **bold**, *italic*/_italic_, `code`, line breaks, and
+// pipe tables rendered as a simple table (in case the model ignores the no-tables instruction).
 function renderMarkdown(text) {
   if (!text) return null;
   const lines = text.split('\n');
-  return lines.map((line, li) => {
-    const tokens = [];
-    const pattern = /(\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_|`([^`]+)`)/g;
-    let lastIndex = 0;
-    let match;
-    let key = 0;
-    while ((match = pattern.exec(line))) {
-      if (match.index > lastIndex) tokens.push(line.slice(lastIndex, match.index));
-      if (match[2] !== undefined) tokens.push(<strong key={key++}>{match[2]}</strong>);
-      else if (match[3] !== undefined) tokens.push(<em key={key++}>{match[3]}</em>);
-      else if (match[4] !== undefined) tokens.push(<em key={key++}>{match[4]}</em>);
-      else if (match[5] !== undefined) tokens.push(<code key={key++}>{match[5]}</code>);
-      lastIndex = pattern.lastIndex;
+  const blocks = [];
+  let i = 0;
+  let blockKey = 0;
+
+  while (i < lines.length) {
+    const line = lines[i];
+    const next = lines[i + 1];
+    if (line.includes('|') && next !== undefined && isTableSeparatorRow(next)) {
+      const header = parseTableRow(line);
+      let j = i + 2;
+      const rows = [];
+      while (j < lines.length && lines[j].includes('|')) {
+        rows.push(parseTableRow(lines[j]));
+        j++;
+      }
+      blocks.push(
+        <table className="chat-widget__table" key={`tbl-${blockKey++}`}>
+          <thead>
+            <tr>
+              {header.map((h, hi) => (
+                <th key={hi}>{renderInline(h, `th-${hi}`)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((r, ri) => (
+              <tr key={ri}>
+                {r.map((c, ci) => (
+                  <td key={ci}>{renderInline(c, `td-${ri}-${ci}`)}</td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      );
+      i = j;
+      continue;
     }
-    if (lastIndex < line.length) tokens.push(line.slice(lastIndex));
-    return (
-      <span key={li}>
-        {tokens}
-        {li < lines.length - 1 ? <br /> : null}
+
+    blocks.push(
+      <span key={`ln-${blockKey++}`}>
+        {renderInline(line, `l-${i}`)}
+        <br />
       </span>
     );
-  });
+    i++;
+  }
+
+  return blocks;
 }
 
 function ChatIcon() {

@@ -540,6 +540,9 @@ Rules:
   to work around a permissions error.
 - Confirm the outcome of actions clearly and concisely (what changed, IDs/trip numbers involved).
 - Be concise. Use plain language, not raw JSON, when replying to the user.
+- Formatting: do NOT use markdown tables (no "|" pipe tables). The chat UI cannot render them. When listing
+  multiple items, use a simple line-per-item list instead, e.g. "- Truck-011 (UP-78-YP-3730, East, 8,103 km)".
+  Bold (**text**) and short bullet lists are fine.
 """
 
 

@@ -34,8 +34,9 @@
 }
 
 .chat-widget__panel {
-  width: 360px;
-  height: 480px;
+  width: 400px;
+  max-width: calc(100vw - 48px);
+  height: 520px;
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-md);
@@ -101,12 +102,42 @@
 }
 
 .chat-widget__bubble {
-  max-width: 85%;
+  max-width: 92%;
   padding: 8px 11px;
   border-radius: 10px;
   font-size: 13px;
   line-height: 1.45;
   white-space: pre-wrap;
+  overflow-x: auto;
+}
+
+.chat-widget__table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 6px 0;
+  font-size: 12px;
+  white-space: normal;
+}
+
+.chat-widget__table th,
+.chat-widget__table td {
+  border: 1px solid var(--border-subtle);
+  padding: 4px 7px;
+  text-align: left;
+}
+
+.chat-widget__table th {
+  background: var(--bg-hover);
+  font-weight: 600;
+}
+
+.chat-widget__msg--user .chat-widget__table th,
+.chat-widget__msg--user .chat-widget__table td {
+  border-color: rgba(255, 255, 255, 0.35);
+}
+
+.chat-widget__msg--user .chat-widget__table th {
+  background: rgba(255, 255, 255, 0.15);
 }
 
 .chat-widget__msg--user .chat-widget__bubble {
