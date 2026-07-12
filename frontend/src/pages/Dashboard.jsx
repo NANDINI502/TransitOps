@@ -4,8 +4,8 @@ import PageHeader from '../components/PageHeader';
 import StatCard from '../components/StatCard';
 import DataTable from '../components/DataTable';
 import StatusPill from '../components/StatusPill';
-import { dashboardApi, ApiError } from '../api/client';
-import { DonutChart } from '../components/Charts';
+import { dashboardApi, tripsApi, vehiclesApi, driversApi, fuelApi, ApiError } from '../api/client';
+import { DonutChart, BarChart, LineChart } from '../components/Charts';
 
 const VEHICLE_TYPES = ['All Types', 'Truck', 'Van', 'Bus', 'Car'];
 const STATUS_OPTIONS = ['All Statuses', 'Available', 'On Trip', 'In Shop', 'Retired'];
@@ -26,6 +26,10 @@ export default function Dashboard() {
   const [kpis, setKpis] = useState(null);
   const [recentTrips, setRecentTrips] = useState([]);
   const [breakdown, setBreakdown] = useState(null);
+  const [allTrips, setAllTrips] = useState([]);
+  const [vehicles, setVehicles] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+  const [fuelLogs, setFuelLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [search, setSearch] = useState('');
@@ -34,14 +38,22 @@ export default function Dashboard() {
     setLoading(true);
     setError(null);
     try {
-      const [k, trips, vb] = await Promise.all([
+      const [k, trips, vb, allT, v, d, fl] = await Promise.all([
         dashboardApi.kpis(filters),
         dashboardApi.recentTrips(),
         dashboardApi.vehicleStatusBreakdown(),
+        tripsApi.list(),
+        vehiclesApi.list(),
+        driversApi.list(),
+        fuelApi.list(),
       ]);
       setKpis(k);
       setRecentTrips(Array.isArray(trips) ? trips : trips?.items || []);
       setBreakdown(vb);
+      setAllTrips(Array.isArray(allT) ? allT : allT?.items || []);
+      setVehicles(Array.isArray(v) ? v : v?.items || []);
+      setDrivers(Array.isArray(d) ? d : d?.items || []);
+      setFuelLogs(Array.isArray(fl) ? fl : fl?.items || []);
     } catch (err) {
       setError(err instanceof ApiError ? err.detail || err.message : 'Failed to load dashboard data.');
     } finally {
@@ -61,6 +73,37 @@ export default function Dashboard() {
           .some((v) => String(v).toLowerCase().includes(needle));
       })
     : recentTrips;
+
+  const tripStatusData = ['Draft', 'Dispatched', 'Completed', 'Cancelled'].map((status) => ({
+    label: status,
+    value: allTrips.filter((t) => t.status === status).length,
+    tone: { Draft: 'gray', Dispatched: 'blue', Completed: 'green', Cancelled: 'red' }[status],
+  }));
+
+  const vehiclesByType = Object.entries(
+    vehicles.reduce((acc, v) => {
+      const type = v.type || 'Other';
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {})
+  ).map(([label, value]) => ({ label, value }));
+
+  const driverStatusData = ['Available', 'On Trip', 'Off Duty', 'Suspended'].map((status) => ({
+    label: status,
+    value: drivers.filter((d) => d.status === status).length,
+    tone: { Available: 'green', 'On Trip': 'blue', 'Off Duty': 'gray', Suspended: 'red' }[status],
+  }));
+
+  const fuelCostByDate = Object.entries(
+    fuelLogs.reduce((acc, f) => {
+      const date = f.date || 'Unknown';
+      acc[date] = (acc[date] || 0) + (Number(f.cost) || 0);
+      return acc;
+    }, {})
+  )
+    .sort(([a], [b]) => (a < b ? -1 : 1))
+    .slice(-12)
+    .map(([label, value]) => ({ label, value }));
 
   return (
     <Layout onSearchChange={setSearch} searchPlaceholder="Search trips, vehicles, drivers…">
@@ -141,6 +184,54 @@ export default function Dashboard() {
                 { label: 'Retired', value: breakdown ? Number(breakdown.retired) || 0 : 0, tone: 'red' },
               ]}
             />
+          )}
+        </div>
+      </div>
+
+      <div className="two-col" style={{ marginTop: 20 }}>
+        <div className="panel">
+          <h3 className="panel__title">Trip Status</h3>
+          {loading ? (
+            <div className="data-table__state">
+              <div className="spinner" /> Loading…
+            </div>
+          ) : (
+            <DonutChart data={tripStatusData} />
+          )}
+        </div>
+
+        <div className="panel">
+          <h3 className="panel__title">Vehicles by Type</h3>
+          {loading ? (
+            <div className="data-table__state">
+              <div className="spinner" /> Loading…
+            </div>
+          ) : (
+            <BarChart data={vehiclesByType} />
+          )}
+        </div>
+      </div>
+
+      <div className="two-col" style={{ marginTop: 20 }}>
+        <div className="panel">
+          <h3 className="panel__title">Driver Status</h3>
+          {loading ? (
+            <div className="data-table__state">
+              <div className="spinner" /> Loading…
+            </div>
+          ) : (
+            <DonutChart data={driverStatusData} />
+          )}
+        </div>
+
+        <div className="panel">
+          <h3 className="panel__title">Fuel Cost Trend</h3>
+          {loading ? (
+            <div className="data-table__state">
+              <div className="spinner" /> Loading…
+            </div>
+          ) : (
+            <LineChart data={fuelCostByDate} />
           )}
         </div>
       </div>

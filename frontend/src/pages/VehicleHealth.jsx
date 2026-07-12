@@ -54,8 +54,12 @@ function computeHealth(vehicle, vehicleTrips, vehicleMaintenance) {
     suggestion = 'Consider plains rotation — prolonged mountain exposure';
   } else if (score < 30) {
     suggestion = 'Immediate inspection required — critical health';
-  } else if (maintenanceCount >= 4 && score < 60) {
+  } else if (maintenanceCount >= 4) {
     suggestion = 'Frequent repairs — evaluate for major overhaul';
+  } else if (grade === 'critical') {
+    suggestion = 'Critical health score — schedule inspection';
+  } else if (vehicle.status === 'In Shop' && maintenanceCount >= 2) {
+    suggestion = 'Repeated shop visits — review maintenance history';
   }
 
   return {
