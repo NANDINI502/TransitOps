@@ -24,7 +24,7 @@
   height: 28px;
   border-radius: 8px;
   background: var(--accent);
-  color: #1a1206;
+  color: #ffffff;
   font-weight: 800;
   display: flex;
   align-items: center;
@@ -34,16 +34,17 @@
 }
 
 .sidebar__brand-word {
-  font-weight: 700;
-  font-size: 15.5px;
-  letter-spacing: -0.01em;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.005em;
 }
 
 .sidebar__nav {
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  gap: 2px;
+  padding: 14px 10px;
+  gap: 4px;
   flex: 1;
   overflow-y: auto;
 }
@@ -51,8 +52,9 @@
 .sidebar__link {
   display: flex;
   align-items: center;
-  gap: 11px;
-  padding: 9px 12px;
+  gap: 12px;
+  height: 42px;
+  padding: 0 12px;
   border-radius: var(--radius-sm);
   border-left: 3px solid transparent;
   color: var(--text-secondary);
@@ -64,7 +66,9 @@
 
 .sidebar__link svg {
   flex-shrink: 0;
-  opacity: 0.85;
+  opacity: 0.75;
+  width: 18px;
+  height: 18px;
 }
 
 .sidebar__link:hover {

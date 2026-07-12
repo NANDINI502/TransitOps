@@ -77,31 +77,32 @@ export default function Dashboard() {
       <PageHeader
         title="Dashboard"
         description="Live overview of fleet activity, trips, and utilization."
+        filters={
+          <>
+            <select value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}>
+              {VEHICLE_TYPES.map((t) => (
+                <option key={t} value={t === 'All Types' ? '' : t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
+              {STATUS_OPTIONS.map((s) => (
+                <option key={s} value={s === 'All Statuses' ? '' : s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+            <select value={filters.region} onChange={(e) => setFilters((f) => ({ ...f, region: e.target.value }))}>
+              {REGIONS.map((r) => (
+                <option key={r} value={r === 'All Regions' ? '' : r}>
+                  {r}
+                </option>
+              ))}
+            </select>
+          </>
+        }
       />
-
-      <div className="filter-bar">
-        <select value={filters.type} onChange={(e) => setFilters((f) => ({ ...f, type: e.target.value }))}>
-          {VEHICLE_TYPES.map((t) => (
-            <option key={t} value={t === 'All Types' ? '' : t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select value={filters.status} onChange={(e) => setFilters((f) => ({ ...f, status: e.target.value }))}>
-          {STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s === 'All Statuses' ? '' : s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <select value={filters.region} onChange={(e) => setFilters((f) => ({ ...f, region: e.target.value }))}>
-          {REGIONS.map((r) => (
-            <option key={r} value={r === 'All Regions' ? '' : r}>
-              {r}
-            </option>
-          ))}
-        </select>
-      </div>
 
       {error ? <div className="error-banner">{error}</div> : null}
 

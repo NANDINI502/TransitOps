@@ -23,7 +23,7 @@
 
 .btn--primary {
   background: var(--accent);
-  color: #1a1206;
+  color: #ffffff;
 }
 
 .btn--primary:hover {
@@ -54,11 +54,15 @@
 .btn--danger {
   background: var(--status-red-soft);
   color: var(--status-red);
-  border-color: rgba(224, 92, 92, 0.35);
+  border-color: rgba(201, 65, 65, 0.3);
 }
 
 .btn--danger:hover {
-  background: rgba(224, 92, 92, 0.28);
+  background: rgba(201, 65, 65, 0.2);
+}
+
+.btn:active {
+  filter: brightness(0.96);
 }
 
 .btn:disabled {

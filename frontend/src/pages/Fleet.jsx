@@ -128,7 +128,7 @@ export default function Fleet() {
   };
 
   return (
-    <Layout>
+    <Layout onSearchChange={setSearch} searchPlaceholder="Search reg. no or name…">
       <PageHeader
         title="Fleet / Vehicle Registry"
         description="Manage vehicle records, capacity, and lifecycle status."
@@ -139,43 +139,50 @@ export default function Fleet() {
             </Button>
           ) : null
         }
+        filters={
+          <>
+            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
+              <option value="">All Types</option>
+              {TYPES.map((t) => (
+                <option key={t} value={t}>
+                  {t}
+                </option>
+              ))}
+            </select>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+              <option value="">All Statuses</option>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {s}
+                </option>
+              ))}
+            </select>
+          </>
+        }
       />
-
-      <div className="filter-bar">
-        <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)}>
-          <option value="">All Types</option>
-          {TYPES.map((t) => (
-            <option key={t} value={t}>
-              {t}
-            </option>
-          ))}
-        </select>
-        <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
-          <option value="">All Statuses</option>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
-        <input placeholder="Search reg. no…" value={search} onChange={(e) => setSearch(e.target.value)} />
-      </div>
 
       {error ? <div className="error-banner">{error}</div> : null}
 
       <DataTable
         loading={loading}
         rows={filtered}
+        rowTone={(r) => r.status}
         emptyText="No vehicles found. Add your first vehicle to get started."
         columns={[
           { key: 'reg_no', header: 'Reg. No', render: (r) => <strong>{r.reg_no}</strong> },
           { key: 'name', header: 'Name / Model' },
           { key: 'type', header: 'Type' },
-          { key: 'max_load_kg', header: 'Capacity', render: (r) => `${r.max_load_kg ?? '—'} kg` },
-          { key: 'odometer_km', header: 'Odometer', render: (r) => `${(r.odometer_km ?? 0).toLocaleString?.() ?? r.odometer_km} km` },
+          { key: 'max_load_kg', header: 'Capacity', align: 'right', render: (r) => `${r.max_load_kg ?? '—'} kg` },
+          {
+            key: 'odometer_km',
+            header: 'Odometer',
+            align: 'right',
+            render: (r) => `${(r.odometer_km ?? 0).toLocaleString?.() ?? r.odometer_km} km`,
+          },
           {
             key: 'acquisition_cost',
             header: 'Acquisition Cost',
+            align: 'right',
             render: (r) => (r.acquisition_cost != null ? `₹${Number(r.acquisition_cost).toLocaleString()}` : '—'),
           },
           { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status} /> },
@@ -217,49 +224,55 @@ export default function Fleet() {
       >
         <form className="form-grid" onSubmit={handleSave}>
           {formError ? <div className="error-banner">{formError}</div> : null}
-          <div className="form-field">
-            <label>Registration No.</label>
-            <input value={form.reg_no} onChange={(e) => setForm((f) => ({ ...f, reg_no: e.target.value }))} placeholder="e.g. MH-12-AB-1234" />
+          <div className="form-section">
+            <div className="form-section__label">Vehicle Identity</div>
+            <div className="form-field">
+              <label>Registration No.</label>
+              <input value={form.reg_no} onChange={(e) => setForm((f) => ({ ...f, reg_no: e.target.value }))} placeholder="e.g. MH-12-AB-1234" />
+            </div>
+            <div className="form-field">
+              <label>Name / Model</label>
+              <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Tata Ace" />
+            </div>
+            <div className="form-field">
+              <label>Type</label>
+              <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
+                {TYPES.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label>Region</label>
+              <input value={form.region} onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))} placeholder="e.g. North" />
+            </div>
           </div>
-          <div className="form-field">
-            <label>Name / Model</label>
-            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} placeholder="e.g. Tata Ace" />
-          </div>
-          <div className="form-field">
-            <label>Type</label>
-            <select value={form.type} onChange={(e) => setForm((f) => ({ ...f, type: e.target.value }))}>
-              {TYPES.map((t) => (
-                <option key={t} value={t}>
-                  {t}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-field">
-            <label>Max Load Capacity (kg)</label>
-            <input type="number" min="0" value={form.max_load_kg} onChange={(e) => setForm((f) => ({ ...f, max_load_kg: e.target.value }))} />
-          </div>
-          <div className="form-field">
-            <label>Odometer (km)</label>
-            <input type="number" min="0" value={form.odometer_km} onChange={(e) => setForm((f) => ({ ...f, odometer_km: e.target.value }))} />
-          </div>
-          <div className="form-field">
-            <label>Acquisition Cost</label>
-            <input type="number" min="0" value={form.acquisition_cost} onChange={(e) => setForm((f) => ({ ...f, acquisition_cost: e.target.value }))} />
-          </div>
-          <div className="form-field">
-            <label>Region</label>
-            <input value={form.region} onChange={(e) => setForm((f) => ({ ...f, region: e.target.value }))} placeholder="e.g. North" />
-          </div>
-          <div className="form-field">
-            <label>Status</label>
-            <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+          <div className="form-section">
+            <div className="form-section__label">Capacity &amp; Status</div>
+            <div className="form-field">
+              <label>Max Load Capacity (kg)</label>
+              <input type="number" min="0" value={form.max_load_kg} onChange={(e) => setForm((f) => ({ ...f, max_load_kg: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>Odometer (km)</label>
+              <input type="number" min="0" value={form.odometer_km} onChange={(e) => setForm((f) => ({ ...f, odometer_km: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>Acquisition Cost</label>
+              <input type="number" min="0" value={form.acquisition_cost} onChange={(e) => setForm((f) => ({ ...f, acquisition_cost: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>Status</label>
+              <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </form>
       </Modal>

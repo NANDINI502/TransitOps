@@ -13,10 +13,11 @@
 
 .data-table thead th {
   text-align: left;
-  padding: 10px 14px;
-  font-size: 11.5px;
+  padding: 7px 14px;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.045em;
   color: var(--text-muted);
   background: var(--bg-panel-alt);
   border-bottom: 1px solid var(--border-subtle);
@@ -24,10 +25,26 @@
 }
 
 .data-table tbody td {
-  padding: 11px 14px;
+  padding: 8px 14px;
   border-bottom: 1px solid var(--border-subtle);
   color: var(--text-primary);
   vertical-align: middle;
+  line-height: 1.35;
+  box-shadow: inset 3px 0 0 transparent;
+}
+
+.data-table tbody td:first-child {
+  box-shadow: inset 3px 0 0 var(--row-accent, transparent);
+}
+
+.data-table__row--green td:first-child { --row-accent: var(--status-green); }
+.data-table__row--blue td:first-child { --row-accent: var(--status-blue); }
+.data-table__row--amber td:first-child { --row-accent: var(--status-amber); }
+.data-table__row--red td:first-child { --row-accent: var(--status-red); }
+.data-table__row--gray td:first-child { --row-accent: var(--status-gray); }
+
+.data-table tbody tr:nth-child(even) {
+  background: var(--bg-panel-alt);
 }
 
 .data-table tbody tr:last-child td {
@@ -36,6 +53,11 @@
 
 .data-table tbody tr:hover {
   background: var(--bg-hover);
+}
+
+.data-table--right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 
 .data-table__state {

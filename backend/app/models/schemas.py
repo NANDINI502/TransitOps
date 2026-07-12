@@ -184,6 +184,9 @@ class TripOut(BaseModel):
     destination: str
     vehicle_id: str
     driver_id: str
+    vehicle_name: Optional[str] = None
+    vehicle_reg_no: Optional[str] = None
+    driver_name: Optional[str] = None
     cargo_weight_kg: float
     planned_distance_km: float
     status: str

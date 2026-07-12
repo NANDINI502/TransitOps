@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.auth import CurrentUser, require_module_access
 from app.core.firebase import db
 from app.models.schemas import ExpenseCreate, ExpenseOut
-from app.utils.firestore_helpers import doc_to_dict, utcnow_iso
+from app.utils.firestore_helpers import doc_to_dict, get_all_cached, invalidate_cache, utcnow_iso
 
 router = APIRouter(prefix="/api/expenses", tags=["expenses"])
 
@@ -17,15 +17,14 @@ def list_expenses(
     category: Optional[str] = Query(default=None),
     user: CurrentUser = Depends(require_module_access("fuel_expenses", "view")),
 ):
-    query = db.collection("expenses")
+    docs = get_all_cached("expenses")
     if vehicle_id:
-        query = query.where("vehicle_id", "==", vehicle_id)
+        docs = [d for d in docs if d.get("vehicle_id") == vehicle_id]
     if trip_id:
-        query = query.where("trip_id", "==", trip_id)
+        docs = [d for d in docs if d.get("trip_id") == trip_id]
     if category:
-        query = query.where("category", "==", category)
-    docs = query.stream()
-    return [doc_to_dict(d) for d in docs]
+        docs = [d for d in docs if d.get("category") == category]
+    return docs
 
 
 @router.post("", response_model=ExpenseOut, status_code=201)
@@ -37,4 +36,5 @@ def create_expense(body: ExpenseCreate, user: CurrentUser = Depends(require_modu
     data = body.model_dump()
     data["created_at"] = utcnow_iso()
     _, ref = db.collection("expenses").add(data)
+    invalidate_cache("expenses")
     return doc_to_dict(ref.get())

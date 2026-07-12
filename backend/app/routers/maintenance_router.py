@@ -6,7 +6,7 @@ from firebase_admin import firestore
 from app.core.auth import CurrentUser, require_module_access
 from app.core.firebase import db
 from app.models.schemas import MaintenanceCreate, MaintenanceOut
-from app.utils.firestore_helpers import doc_to_dict, utcnow_iso
+from app.utils.firestore_helpers import doc_to_dict, get_all_cached, invalidate_cache, utcnow_iso
 
 router = APIRouter(prefix="/api/maintenance", tags=["maintenance"])
 
@@ -17,13 +17,12 @@ def list_maintenance(
     status: Optional[str] = Query(default=None),
     user: CurrentUser = Depends(require_module_access("fleet", "view")),
 ):
-    query = db.collection("maintenance_logs")
+    docs = get_all_cached("maintenance_logs")
     if vehicle_id:
-        query = query.where("vehicle_id", "==", vehicle_id)
+        docs = [d for d in docs if d.get("vehicle_id") == vehicle_id]
     if status:
-        query = query.where("status", "==", status)
-    docs = query.stream()
-    return [doc_to_dict(d) for d in docs]
+        docs = [d for d in docs if d.get("status") == status]
+    return docs
 
 
 @router.post("", response_model=MaintenanceOut, status_code=201)
@@ -49,9 +48,11 @@ def create_maintenance(body: MaintenanceCreate, user: CurrentUser = Depends(requ
             t.update(vehicle_ref, {"status": "In Shop"})
 
         run(txn)
+        invalidate_cache("vehicles")
     else:
         maintenance_ref.set(data)
 
+    invalidate_cache("maintenance_logs")
     return doc_to_dict(maintenance_ref.get())
 
 
@@ -83,4 +84,6 @@ def complete_maintenance(maintenance_id: str, user: CurrentUser = Depends(requir
             t.update(vehicle_ref, {"status": "Available"})
 
     run(txn)
+    invalidate_cache("maintenance_logs")
+    invalidate_cache("vehicles")
     return doc_to_dict(maintenance_ref.get())

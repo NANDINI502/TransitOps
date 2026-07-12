@@ -32,7 +32,7 @@ export default function App() {
           <Route
             path="/fleet"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="fleet">
                 <Fleet />
               </ProtectedRoute>
             }
@@ -40,7 +40,7 @@ export default function App() {
           <Route
             path="/drivers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="drivers">
                 <Drivers />
               </ProtectedRoute>
             }
@@ -48,7 +48,7 @@ export default function App() {
           <Route
             path="/trips"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="trips">
                 <Trips />
               </ProtectedRoute>
             }
@@ -56,7 +56,7 @@ export default function App() {
           <Route
             path="/maintenance"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="fleet">
                 <Maintenance />
               </ProtectedRoute>
             }
@@ -64,7 +64,7 @@ export default function App() {
           <Route
             path="/fuel-expenses"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="fuelExp">
                 <FuelExpenses />
               </ProtectedRoute>
             }
@@ -72,7 +72,7 @@ export default function App() {
           <Route
             path="/analytics"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute module="analytics">
                 <Analytics />
               </ProtectedRoute>
             }

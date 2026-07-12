@@ -130,7 +130,7 @@ export default function Drivers() {
   };
 
   return (
-    <Layout>
+    <Layout onSearchChange={setSearch} searchPlaceholder="Search name or license no…">
       <PageHeader
         title="Drivers"
         description="Manage driver licenses, contact info, and performance."
@@ -143,15 +143,12 @@ export default function Drivers() {
         }
       />
 
-      <div className="filter-bar">
-        <input placeholder="Search name or license no…" value={search} onChange={(e) => setSearch(e.target.value)} />
-      </div>
-
       {error ? <div className="error-banner">{error}</div> : null}
 
       <DataTable
         loading={loading}
         rows={filtered}
+        rowTone={(r) => (isExpired(r.license_expiry) ? 'Suspended' : r.status)}
         emptyText="No drivers found. Add your first driver to get started."
         columns={[
           { key: 'name', header: 'Driver', render: (r) => <strong>{r.name}</strong> },
@@ -170,11 +167,13 @@ export default function Drivers() {
           {
             key: 'trip_completion_pct',
             header: 'Trip Completion %',
+            align: 'right',
             render: (r) => (r.trip_completion_pct != null ? `${r.trip_completion_pct}%` : '—'),
           },
           {
             key: 'safety_score',
             header: 'Safety Score',
+            align: 'right',
             render: (r) => <StatusPill tone={safetyTone(r.safety_score)}>{r.safety_score ?? '—'}</StatusPill>,
           },
           {
@@ -218,45 +217,51 @@ export default function Drivers() {
       >
         <form className="form-grid" onSubmit={handleSave}>
           {formError ? <div className="error-banner">{formError}</div> : null}
-          <div className="form-field">
-            <label>Full Name</label>
-            <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+          <div className="form-section">
+            <div className="form-section__label">Identity &amp; License</div>
+            <div className="form-field">
+              <label>Full Name</label>
+              <input value={form.name} onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>License No.</label>
+              <input value={form.license_no} onChange={(e) => setForm((f) => ({ ...f, license_no: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>License Category</label>
+              <select value={form.license_category} onChange={(e) => setForm((f) => ({ ...f, license_category: e.target.value }))}>
+                {CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label>License Expiry</label>
+              <input type="date" value={form.license_expiry} onChange={(e) => setForm((f) => ({ ...f, license_expiry: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>Contact</label>
+              <input value={form.contact} onChange={(e) => setForm((f) => ({ ...f, contact: e.target.value }))} placeholder="Phone or email" />
+            </div>
           </div>
-          <div className="form-field">
-            <label>License No.</label>
-            <input value={form.license_no} onChange={(e) => setForm((f) => ({ ...f, license_no: e.target.value }))} />
-          </div>
-          <div className="form-field">
-            <label>License Category</label>
-            <select value={form.license_category} onChange={(e) => setForm((f) => ({ ...f, license_category: e.target.value }))}>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="form-field">
-            <label>License Expiry</label>
-            <input type="date" value={form.license_expiry} onChange={(e) => setForm((f) => ({ ...f, license_expiry: e.target.value }))} />
-          </div>
-          <div className="form-field">
-            <label>Contact</label>
-            <input value={form.contact} onChange={(e) => setForm((f) => ({ ...f, contact: e.target.value }))} placeholder="Phone or email" />
-          </div>
-          <div className="form-field">
-            <label>Safety Score (0–100)</label>
-            <input type="number" min="0" max="100" value={form.safety_score} onChange={(e) => setForm((f) => ({ ...f, safety_score: e.target.value }))} />
-          </div>
-          <div className="form-field">
-            <label>Status</label>
-            <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
-              {STATUSES.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+          <div className="form-section">
+            <div className="form-section__label">Performance &amp; Status</div>
+            <div className="form-field">
+              <label>Safety Score (0–100)</label>
+              <input type="number" min="0" max="100" value={form.safety_score} onChange={(e) => setForm((f) => ({ ...f, safety_score: e.target.value }))} />
+            </div>
+            <div className="form-field">
+              <label>Status</label>
+              <select value={form.status} onChange={(e) => setForm((f) => ({ ...f, status: e.target.value }))}>
+                {STATUSES.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
         </form>
       </Modal>

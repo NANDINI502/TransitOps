@@ -1,11 +1,14 @@
-export default function PageHeader({ title, description, actions }) {
+export default function PageHeader({ title, description, actions, filters }) {
   return (
-    <div className="page-header">
-      <div>
-        <h1>{title}</h1>
-        {description ? <p>{description}</p> : null}
+    <div className="control-panel">
+      <div className="control-panel__top">
+        <div className="control-panel__titles">
+          <h1>{title}</h1>
+          {description ? <p>{description}</p> : null}
+        </div>
+        {actions ? <div className="control-panel__actions">{actions}</div> : null}
       </div>
-      {actions ? <div className="page-header__actions">{actions}</div> : null}
+      {filters ? <div className="control-panel__filters">{filters}</div> : null}
     </div>
   );
 }

@@ -1,58 +1,62 @@
 .stat-card {
   background: var(--bg-panel);
   border: 1px solid var(--border-subtle);
-  border-left: 3px solid var(--accent);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
+  border-top: 2px solid var(--accent);
+  border-radius: 3px;
+  padding: 10px 12px;
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 3px;
+  box-shadow: none !important;
 }
 
 .stat-card--green {
-  border-left-color: var(--status-green);
+  border-top-color: var(--status-green);
 }
 .stat-card--blue {
-  border-left-color: var(--status-blue);
+  border-top-color: var(--status-blue);
 }
 .stat-card--amber {
-  border-left-color: var(--status-amber);
+  border-top-color: var(--status-amber);
 }
 .stat-card--red {
-  border-left-color: var(--status-red);
+  border-top-color: var(--status-red);
 }
 .stat-card--gray {
-  border-left-color: var(--status-gray);
+  border-top-color: var(--status-gray);
 }
 .stat-card--default {
-  border-left-color: var(--accent);
+  border-top-color: var(--accent);
 }
 
 .stat-card__label {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-secondary);
-  font-weight: 500;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
 .stat-card__value {
-  font-size: 26px;
+  font-size: 21px;
   font-weight: 700;
   color: var(--text-primary);
-  line-height: 1.1;
+  line-height: 1.15;
+  font-variant-numeric: tabular-nums;
 }
 
 .stat-card__suffix {
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary);
   margin-left: 3px;
 }
 
 .stat-card__hint {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--text-muted);
 }

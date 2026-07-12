@@ -1,6 +1,7 @@
 import './DataTable.css';
+import { toneForStatus } from './StatusPill';
 
-export default function DataTable({ columns, rows, loading, error, emptyText = 'No records found.', rowKey = 'id' }) {
+export default function DataTable({ columns, rows, loading, error, emptyText = 'No records found.', rowKey = 'id', rowTone }) {
   if (loading) {
     return (
       <div className="data-table__state">
@@ -21,18 +22,25 @@ export default function DataTable({ columns, rows, loading, error, emptyText = '
         <thead>
           <tr>
             {columns.map((col) => (
-              <th key={col.key}>{col.header}</th>
+              <th key={col.key} className={col.align === 'right' ? 'data-table--right' : undefined}>
+                {col.header}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {rows.map((row, i) => (
-            <tr key={row[rowKey] ?? i}>
-              {columns.map((col) => (
-                <td key={col.key}>{col.render ? col.render(row) : row[col.key]}</td>
-              ))}
-            </tr>
-          ))}
+          {rows.map((row, i) => {
+            const tone = rowTone ? toneForStatus(rowTone(row)) : null;
+            return (
+              <tr key={row[rowKey] ?? i} className={tone ? `data-table__row--${tone}` : undefined}>
+                {columns.map((col) => (
+                  <td key={col.key} className={col.align === 'right' ? 'data-table--right mono' : undefined}>
+                    {col.render ? col.render(row) : row[col.key]}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>

@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.auth import CurrentUser, require_module_access
 from app.core.firebase import db
 from app.models.schemas import VehicleCreate, VehicleOut, VehicleUpdate
-from app.utils.firestore_helpers import check_unique_reg_no, doc_to_dict, utcnow_iso
+from app.utils.firestore_helpers import check_unique_reg_no, doc_to_dict, get_all_cached, invalidate_cache, utcnow_iso
 
 router = APIRouter(prefix="/api/vehicles", tags=["vehicles"])
 
@@ -18,19 +18,18 @@ def list_vehicles(
     dispatchable: bool = Query(default=False),
     user: CurrentUser = Depends(require_module_access("fleet", "view")),
 ):
-    query = db.collection("vehicles")
+    vehicles = get_all_cached("vehicles")
     if type:
-        query = query.where("type", "==", type)
+        vehicles = [v for v in vehicles if v.get("type") == type]
     if region:
-        query = query.where("region", "==", region)
+        vehicles = [v for v in vehicles if v.get("region") == region]
 
     if dispatchable:
-        query = query.where("status", "==", "Available")
+        vehicles = [v for v in vehicles if v.get("status") == "Available"]
     elif status:
-        query = query.where("status", "==", status)
+        vehicles = [v for v in vehicles if v.get("status") == status]
 
-    docs = query.stream()
-    return [doc_to_dict(d) for d in docs]
+    return vehicles
 
 
 @router.post("", response_model=VehicleOut, status_code=201)
@@ -41,6 +40,7 @@ def create_vehicle(body: VehicleCreate, user: CurrentUser = Depends(require_modu
     data = body.model_dump()
     data["created_at"] = utcnow_iso()
     _, ref = db.collection("vehicles").add(data)
+    invalidate_cache("vehicles")
     return doc_to_dict(ref.get())
 
 
@@ -67,6 +67,7 @@ def update_vehicle(
 
     if updates:
         ref.update(updates)
+        invalidate_cache("vehicles")
     return doc_to_dict(ref.get())
 
 
@@ -77,6 +78,7 @@ def delete_vehicle(vehicle_id: str, user: CurrentUser = Depends(require_module_a
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Vehicle not found")
     ref.delete()
+    invalidate_cache("vehicles")
     return None
 
 

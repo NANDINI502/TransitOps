@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from app.core.auth import CurrentUser, require_module_access
 from app.core.firebase import db
 from app.models.schemas import DriverCreate, DriverOut, DriverUpdate
-from app.utils.firestore_helpers import doc_to_dict, utcnow_iso
+from app.utils.firestore_helpers import doc_to_dict, get_all_cached, invalidate_cache, utcnow_iso
 
 router = APIRouter(prefix="/api/drivers", tags=["drivers"])
 
@@ -26,11 +26,9 @@ def list_drivers(
     dispatchable: bool = Query(default=False),
     user: CurrentUser = Depends(require_module_access("drivers", "view")),
 ):
-    query = db.collection("drivers")
+    docs = get_all_cached("drivers")
     if not dispatchable and status:
-        query = query.where("status", "==", status)
-
-    docs = [doc_to_dict(d) for d in query.stream()]
+        docs = [d for d in docs if d.get("status") == status]
 
     if dispatchable:
         docs = [d for d in docs if d.get("status") == "Available" and license_ok(d.get("license_expiry"))]
@@ -43,6 +41,7 @@ def create_driver(body: DriverCreate, user: CurrentUser = Depends(require_module
     data = body.model_dump()
     data["created_at"] = utcnow_iso()
     _, ref = db.collection("drivers").add(data)
+    invalidate_cache("drivers")
     return doc_to_dict(ref.get())
 
 
@@ -66,6 +65,7 @@ def update_driver(
     updates = {k: v for k, v in body.model_dump(exclude_unset=True).items() if v is not None}
     if updates:
         ref.update(updates)
+        invalidate_cache("drivers")
     return doc_to_dict(ref.get())
 
 
@@ -76,4 +76,5 @@ def delete_driver(driver_id: str, user: CurrentUser = Depends(require_module_acc
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Driver not found")
     ref.delete()
+    invalidate_cache("drivers")
     return None

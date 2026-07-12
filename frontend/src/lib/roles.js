@@ -1,4 +1,5 @@
 export const ROLES = {
+  ADMIN: 'admin',
   FLEET_MANAGER: 'fleet_manager',
   DISPATCHER: 'dispatcher',
   SAFETY_OFFICER: 'safety_officer',
@@ -6,6 +7,7 @@ export const ROLES = {
 };
 
 export const ROLE_LABELS = {
+  [ROLES.ADMIN]: 'Admin',
   [ROLES.FLEET_MANAGER]: 'Fleet Manager',
   [ROLES.DISPATCHER]: 'Dispatcher',
   [ROLES.SAFETY_OFFICER]: 'Safety Officer',
@@ -13,6 +15,7 @@ export const ROLE_LABELS = {
 };
 
 export const ACCESS_MATRIX = {
+  [ROLES.ADMIN]: { fleet: 'full', drivers: 'full', trips: 'full', fuelExp: 'full', analytics: 'full' },
   [ROLES.FLEET_MANAGER]: { fleet: 'full', drivers: 'full', trips: 'view', fuelExp: 'view', analytics: 'view' },
   [ROLES.DISPATCHER]: { fleet: 'view', drivers: 'view', trips: 'full', fuelExp: 'none', analytics: 'none' },
   [ROLES.SAFETY_OFFICER]: { fleet: 'view', drivers: 'full', trips: 'view', fuelExp: 'none', analytics: 'view' },

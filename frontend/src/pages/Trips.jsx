@@ -29,6 +29,7 @@ export default function Trips() {
   const [drivers, setDrivers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
 
   const [form, setForm] = useState(emptyForm);
   const [creating, setCreating] = useState(false);
@@ -168,9 +169,22 @@ export default function Trips() {
 
   const stageIndex = (status) => Math.max(0, STAGES.findIndex((s) => s.toLowerCase() === String(status).toLowerCase()));
 
+  const visibleTrips = useMemo(() => {
+    if (!search.trim()) return trips;
+    const q = search.trim().toLowerCase();
+    return trips.filter((t) =>
+      [t.trip_no, t.source, t.destination, t.vehicle_name, t.vehicle_reg_no, t.driver_name]
+        .filter(Boolean)
+        .some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [trips, search]);
+
   return (
-    <Layout>
-      <PageHeader title="Trips / Trip Dispatcher" description="Create, dispatch, and track trips through their lifecycle." />
+    <Layout onSearchChange={setSearch} searchPlaceholder="Search trip#, route, vehicle, driver…">
+      <PageHeader
+        title="Trips / Trip Dispatcher"
+        description="Create, dispatch, and track trips through their lifecycle."
+      />
 
       <div className="two-col">
         <div>
@@ -279,11 +293,13 @@ export default function Trips() {
             <div className="data-table__state">
               <div className="spinner" /> Loading…
             </div>
-          ) : trips.length === 0 ? (
-            <div className="data-table__state">No trips yet. Create one from the form on the left.</div>
+          ) : visibleTrips.length === 0 ? (
+            <div className="data-table__state">
+              {trips.length === 0 ? 'No trips yet. Create one from the form on the left.' : 'No trips match your search.'}
+            </div>
           ) : (
             <div className="trip-cards">
-              {trips.map((trip) => (
+              {visibleTrips.map((trip) => (
                 <div className={`trip-card${trip.id === lastCreatedId ? ' trip-card--flash' : ''}`} key={trip.id}>
                   <div className="trip-card__top">
                     <strong>{trip.trip_no || `Trip #${trip.id}`}</strong>

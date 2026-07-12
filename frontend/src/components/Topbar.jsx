@@ -10,7 +10,7 @@ function initialsFor(name, email) {
   return src.slice(0, 2).toUpperCase();
 }
 
-export default function Topbar({ search, onSearchChange, searchPlaceholder = 'Search…' }) {
+export default function Topbar({ search, onSearchChange, searchPlaceholder = 'Search…', section }) {
   const { profile, role, logout } = useAuth();
   const navigate = useNavigate();
 
@@ -21,6 +21,15 @@ export default function Topbar({ search, onSearchChange, searchPlaceholder = 'Se
 
   return (
     <header className="topbar">
+      <div className="topbar__crumb">
+        <span className="topbar__crumb-app">TransitOps</span>
+        {section ? (
+          <>
+            <span className="topbar__crumb-sep">/</span>
+            <span className="topbar__crumb-section">{section}</span>
+          </>
+        ) : null}
+      </div>
       <div className="topbar__search">
         {onSearchChange ? (
           <>
@@ -34,10 +43,14 @@ export default function Topbar({ search, onSearchChange, searchPlaceholder = 'Se
         ) : null}
       </div>
       <div className="topbar__user">
-        <span className="topbar__name">{profile?.name || profile?.email || 'Guest'}</span>
-        {role ? <span className="role-badge">{ROLE_LABELS[role] || role}</span> : null}
         <div className="topbar__avatar" title={profile?.email}>
           {initialsFor(profile?.name, profile?.email)}
+        </div>
+        <div className="topbar__identity">
+          <span className="topbar__name">{profile?.name || profile?.email || 'Guest'}</span>
+          {role && ROLE_LABELS[role] !== profile?.name ? (
+            <span className="topbar__role">{ROLE_LABELS[role] || role}</span>
+          ) : null}
         </div>
         <button className="topbar__logout" onClick={handleLogout} title="Sign out">
           <LogoutIcon />

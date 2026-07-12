@@ -6,14 +6,13 @@ from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
 
 from app.core.auth import CurrentUser, require_module_access
-from app.core.firebase import db
-from app.utils.firestore_helpers import doc_to_dict
+from app.utils.firestore_helpers import get_all_cached
 
 router = APIRouter(prefix="/api/analytics", tags=["analytics"])
 
 
 def _vehicle_cost_breakdown():
-    vehicles = [doc_to_dict(d) for d in db.collection("vehicles").stream()]
+    vehicles = get_all_cached("vehicles")
     breakdown = {
         v["id"]: {
             "fuel_cost": 0.0,
@@ -25,26 +24,24 @@ def _vehicle_cost_breakdown():
         for v in vehicles
     }
 
-    for d in db.collection("fuel_logs").stream():
-        data = d.to_dict() or {}
+    for data in get_all_cached("fuel_logs"):
         vid = data.get("vehicle_id")
         if vid in breakdown:
             breakdown[vid]["fuel_cost"] += data.get("cost", 0) or 0
 
-    for d in db.collection("maintenance_logs").stream():
-        data = d.to_dict() or {}
+    for data in get_all_cached("maintenance_logs"):
         vid = data.get("vehicle_id")
         if vid in breakdown:
             breakdown[vid]["maintenance_cost"] += data.get("cost", 0) or 0
 
-    for d in db.collection("expenses").stream():
-        data = d.to_dict() or {}
+    for data in get_all_cached("expenses"):
         vid = data.get("vehicle_id")
         if vid in breakdown:
             breakdown[vid]["expenses_cost"] += data.get("amount", 0) or 0
 
-    for d in db.collection("trips").where("status", "==", "Completed").stream():
-        data = d.to_dict() or {}
+    for data in get_all_cached("trips"):
+        if data.get("status") != "Completed":
+            continue
         vid = data.get("vehicle_id")
         if vid in breakdown:
             breakdown[vid]["revenue"] += data.get("revenue", 0) or 0
@@ -54,13 +51,13 @@ def _vehicle_cost_breakdown():
 
 @router.get("/summary")
 def analytics_summary(user: CurrentUser = Depends(require_module_access("analytics", "view"))):
-    completed_trips = [doc_to_dict(d) for d in db.collection("trips").where("status", "==", "Completed").stream()]
+    completed_trips = [t for t in get_all_cached("trips") if t.get("status") == "Completed"]
 
     total_distance = sum(t.get("planned_distance_km", 0) or 0 for t in completed_trips)
     total_fuel_l = sum(t.get("fuel_consumed_l", 0) or 0 for t in completed_trips)
     fuel_efficiency_km_per_l = (total_distance / total_fuel_l) if total_fuel_l else 0
 
-    vehicles = [doc_to_dict(d) for d in db.collection("vehicles").stream()]
+    vehicles = get_all_cached("vehicles")
     active_vehicles = [v for v in vehicles if v.get("status") != "Retired"]
     on_trip_vehicles = [v for v in vehicles if v.get("status") == "On Trip"]
     fleet_utilization_pct = (len(on_trip_vehicles) / len(active_vehicles) * 100) if active_vehicles else 0

@@ -1,16 +1,34 @@
+import time
 from datetime import datetime, timezone
-from typing import Any, Dict, Optional
+from typing import Any, Dict, List, Optional
 
 from firebase_admin import firestore
 from google.cloud.firestore_v1 import DocumentSnapshot
 
 from app.core.firebase import db
 
+_COLLECTION_CACHE: dict[str, tuple[float, List[Dict[str, Any]]]] = {}
+_COLLECTION_CACHE_TTL_SECONDS = 5
+
 
 def doc_to_dict(doc: DocumentSnapshot) -> Dict[str, Any]:
     data = doc.to_dict() or {}
     data["id"] = doc.id
     return data
+
+
+def get_all_cached(collection: str) -> List[Dict[str, Any]]:
+    cached = _COLLECTION_CACHE.get(collection)
+    if cached and cached[0] > time.monotonic():
+        return cached[1]
+
+    docs = [doc_to_dict(d) for d in db.collection(collection).stream()]
+    _COLLECTION_CACHE[collection] = (time.monotonic() + _COLLECTION_CACHE_TTL_SECONDS, docs)
+    return docs
+
+
+def invalidate_cache(collection: str) -> None:
+    _COLLECTION_CACHE.pop(collection, None)
 
 
 def utcnow_iso() -> str:

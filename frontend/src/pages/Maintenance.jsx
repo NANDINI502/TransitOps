@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
@@ -33,6 +33,7 @@ export default function Maintenance() {
 
   const [busyId, setBusyId] = useState(null);
   const [actionError, setActionError] = useState(null);
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -95,9 +96,20 @@ export default function Maintenance() {
     return v ? `${v.reg_no} — ${v.name}` : id;
   };
 
+  const visibleRecords = useMemo(() => {
+    if (!search.trim()) return records;
+    const q = search.trim().toLowerCase();
+    return records.filter((r) =>
+      [r.service_type, r.vehicle_name, vehicleLabel(r.vehicle_id)].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [records, search, vehicles]);
+
   return (
-    <Layout>
-      <PageHeader title="Maintenance" description="Log service records and track vehicles currently in the shop." />
+    <Layout onSearchChange={setSearch} searchPlaceholder="Search vehicle or service type…">
+      <PageHeader
+        title="Maintenance"
+        description="Log service records and track vehicles currently in the shop."
+      />
 
       <div className="two-col">
         <div className="panel">
@@ -172,12 +184,12 @@ export default function Maintenance() {
           {actionError ? <div className="error-banner">{actionError}</div> : null}
           <DataTable
             loading={loading}
-            rows={records}
-            emptyText="No service records yet."
+            rows={visibleRecords}
+            emptyText={records.length === 0 ? 'No service records yet.' : 'No records match your search.'}
             columns={[
               { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_name || vehicleLabel(r.vehicle_id) },
               { key: 'service_type', header: 'Service' },
-              { key: 'cost', header: 'Cost', render: (r) => (r.cost != null ? `₹${Number(r.cost).toLocaleString()}` : '—') },
+              { key: 'cost', header: 'Cost', align: 'right', render: (r) => (r.cost != null ? `₹${Number(r.cost).toLocaleString()}` : '—') },
               { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status === 'Active' ? 'In Shop' : r.status} /> },
               ...(editable
                 ? [

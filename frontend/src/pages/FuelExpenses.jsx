@@ -34,6 +34,7 @@ export default function FuelExpenses() {
   const [expenseForm, setExpenseForm] = useState(emptyExpenseForm);
   const [expenseSaving, setExpenseSaving] = useState(false);
   const [expenseError, setExpenseError] = useState(null);
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,6 +70,22 @@ export default function FuelExpenses() {
     const t = trips.find((tr) => String(tr.id) === String(id));
     return t ? t.trip_no || `#${t.id}` : id;
   };
+
+  const visibleFuelLogs = useMemo(() => {
+    if (!search.trim()) return fuelLogs;
+    const q = search.trim().toLowerCase();
+    return fuelLogs.filter((f) =>
+      [f.vehicle_reg_no, vehicleLabel(f.vehicle_id), tripLabel(f.trip_id)].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [fuelLogs, search, vehicles, trips]);
+
+  const visibleExpenses = useMemo(() => {
+    if (!search.trim()) return expenses;
+    const q = search.trim().toLowerCase();
+    return expenses.filter((e) =>
+      [e.vehicle_reg_no, vehicleLabel(e.vehicle_id), tripLabel(e.trip_id), e.category].filter(Boolean).some((v) => String(v).toLowerCase().includes(q))
+    );
+  }, [expenses, search, vehicles, trips]);
 
   const totalFuelCost = useMemo(() => fuelLogs.reduce((sum, f) => sum + (Number(f.cost) || 0), 0), [fuelLogs]);
   const totalMaintFromExpenses = useMemo(
@@ -130,7 +147,7 @@ export default function FuelExpenses() {
   };
 
   return (
-    <Layout>
+    <Layout onSearchChange={setSearch} searchPlaceholder="Search vehicle or trip#…">
       <PageHeader
         title="Fuel & Expenses"
         description="Track fuel consumption and operational expenses per vehicle and trip."
@@ -152,13 +169,13 @@ export default function FuelExpenses() {
         <h3 className="panel__title">Fuel Logs</h3>
         <DataTable
           loading={loading}
-          rows={fuelLogs}
-          emptyText="No fuel logs yet."
+          rows={visibleFuelLogs}
+          emptyText={fuelLogs.length === 0 ? 'No fuel logs yet.' : 'No fuel logs match your search.'}
           columns={[
             { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
             { key: 'date', header: 'Date', render: (r) => (r.date || '').slice(0, 10) },
-            { key: 'liters', header: 'Liters', render: (r) => `${r.liters} L` },
-            { key: 'cost', header: 'Fuel Cost', render: (r) => `₹${Number(r.cost || 0).toLocaleString()}` },
+            { key: 'liters', header: 'Liters', align: 'right', render: (r) => `${r.liters} L` },
+            { key: 'cost', header: 'Fuel Cost', align: 'right', render: (r) => `₹${Number(r.cost || 0).toLocaleString()}` },
           ]}
         />
       </div>
@@ -167,17 +184,23 @@ export default function FuelExpenses() {
         <h3 className="panel__title">Other Expenses</h3>
         <DataTable
           loading={loading}
-          rows={expenses}
-          emptyText="No expenses logged yet."
+          rows={visibleExpenses}
+          emptyText={expenses.length === 0 ? 'No expenses logged yet.' : 'No expenses match your search.'}
           columns={[
             { key: 'trip', header: 'Trip', render: (r) => r.trip_no || tripLabel(r.trip_id) },
             { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
-            { key: 'toll', header: 'Toll', render: (r) => (r.category === 'Toll' ? `₹${Number(r.amount || 0).toLocaleString()}` : '—') },
-            { key: 'other', header: 'Other', render: (r) => (r.category !== 'Toll' ? `₹${Number(r.amount || 0).toLocaleString()}` : '—') },
-            { key: 'maint_linked', header: 'Maint. Linked', render: (r) => (r.maintenance_linked_cost != null ? `₹${Number(r.maintenance_linked_cost).toLocaleString()}` : '—') },
+            { key: 'toll', header: 'Toll', align: 'right', render: (r) => (r.category === 'Toll' ? `₹${Number(r.amount || 0).toLocaleString()}` : '—') },
+            { key: 'other', header: 'Other', align: 'right', render: (r) => (r.category !== 'Toll' ? `₹${Number(r.amount || 0).toLocaleString()}` : '—') },
+            {
+              key: 'maint_linked',
+              header: 'Maint. Linked',
+              align: 'right',
+              render: (r) => (r.maintenance_linked_cost != null ? `₹${Number(r.maintenance_linked_cost).toLocaleString()}` : '—'),
+            },
             {
               key: 'total',
               header: 'Total',
+              align: 'right',
               render: (r) => `₹${(Number(r.amount || 0) + Number(r.maintenance_linked_cost || 0)).toLocaleString()}`,
             },
             { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status || 'Draft'} /> },

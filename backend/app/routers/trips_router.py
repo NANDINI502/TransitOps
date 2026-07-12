@@ -13,7 +13,7 @@ from app.models.schemas import (
     TripDispatchRequest,
     TripOut,
 )
-from app.utils.firestore_helpers import doc_to_dict, next_trip_no, utcnow_iso
+from app.utils.firestore_helpers import doc_to_dict, get_all_cached, invalidate_cache, next_trip_no, utcnow_iso
 
 router = APIRouter(prefix="/api/trips", tags=["trips"])
 
@@ -77,15 +77,33 @@ def check_vehicle_can_dispatch(vehicle: dict):
         raise HTTPException(status_code=400, detail=f"Vehicle '{reg_no}' is already on another trip")
 
 
+def enrich_trips(trips: list[dict]) -> list[dict]:
+    vehicles = {v["id"]: v for v in get_all_cached("vehicles")}
+    drivers = {d["id"]: d for d in get_all_cached("drivers")}
+
+    for trip in trips:
+        vehicle = vehicles.get(trip.get("vehicle_id"))
+        driver = drivers.get(trip.get("driver_id"))
+        trip["vehicle_name"] = vehicle.get("name") if vehicle else None
+        trip["vehicle_reg_no"] = vehicle.get("reg_no") if vehicle else None
+        trip["driver_name"] = driver.get("name") if driver else None
+
+    return trips
+
+
+def enrich_trip(trip: dict) -> dict:
+    return enrich_trips([trip])[0]
+
+
 @router.get("", response_model=list[TripOut])
 def list_trips(
     status: Optional[str] = Query(default=None),
     user: CurrentUser = Depends(require_module_access("trips", "view")),
 ):
-    query = db.collection("trips")
+    trips = get_all_cached("trips")
     if status:
-        query = query.where("status", "==", status)
-    return [doc_to_dict(d) for d in query.stream()]
+        trips = [t for t in trips if t.get("status") == status]
+    return enrich_trips(trips)
 
 
 @router.post("", response_model=TripOut, status_code=201)
@@ -107,7 +125,8 @@ def create_trip(body: TripCreate, user: CurrentUser = Depends(require_module_acc
     )
 
     _, ref = db.collection("trips").add(data)
-    return doc_to_dict(ref.get())
+    invalidate_cache("trips")
+    return enrich_trip(doc_to_dict(ref.get()))
 
 
 @router.get("/{trip_id}", response_model=TripOut)
@@ -115,7 +134,7 @@ def get_trip(trip_id: str, user: CurrentUser = Depends(require_module_access("tr
     doc = db.collection("trips").document(trip_id).get()
     if not doc.exists:
         raise HTTPException(status_code=404, detail="Trip not found")
-    return doc_to_dict(doc)
+    return enrich_trip(doc_to_dict(doc))
 
 
 @router.post("/{trip_id}/dispatch", response_model=TripOut)
@@ -170,7 +189,10 @@ def dispatch_trip(
         t.update(trip_ref, {"status": "Dispatched", "dispatched_at": now})
 
     run(txn)
-    return doc_to_dict(trip_ref.get())
+    invalidate_cache("trips")
+    invalidate_cache("vehicles")
+    invalidate_cache("drivers")
+    return enrich_trip(doc_to_dict(trip_ref.get()))
 
 
 @router.post("/{trip_id}/complete", response_model=TripOut)
@@ -226,7 +248,11 @@ def complete_trip(
         )
 
     run(txn)
-    return doc_to_dict(trip_ref.get())
+    invalidate_cache("trips")
+    invalidate_cache("vehicles")
+    invalidate_cache("drivers")
+    invalidate_cache("fuel_logs")
+    return enrich_trip(doc_to_dict(trip_ref.get()))
 
 
 @router.post("/{trip_id}/cancel", response_model=TripOut)
@@ -265,4 +291,8 @@ def cancel_trip(
         t.update(trip_ref, {"status": "Cancelled"})
 
     run(txn)
-    return doc_to_dict(trip_ref.get())
+    invalidate_cache("trips")
+    if was_dispatched:
+        invalidate_cache("vehicles")
+        invalidate_cache("drivers")
+    return enrich_trip(doc_to_dict(trip_ref.get()))
