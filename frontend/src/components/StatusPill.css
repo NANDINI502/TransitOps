@@ -1,0 +1,37 @@
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  line-height: 1.6;
+}
+
+.status-pill--green {
+  color: var(--status-green);
+  background: var(--status-green-soft);
+}
+
+.status-pill--blue {
+  color: var(--status-blue);
+  background: var(--status-blue-soft);
+}
+
+.status-pill--amber {
+  color: var(--status-amber);
+  background: var(--status-amber-soft);
+}
+
+.status-pill--red {
+  color: var(--status-red);
+  background: var(--status-red-soft);
+}
+
+.status-pill--gray {
+  color: var(--status-gray);
+  background: var(--status-gray-soft);
+}
