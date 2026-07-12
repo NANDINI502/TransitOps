@@ -83,8 +83,10 @@ export function DonutChart({ data, size = 200 }) {
   );
 }
 
+const currencyFormat = (v) => `₹${Number(v).toLocaleString()}`;
+
 // 2. LineChart
-export function LineChart({ data, height = 200 }) {
+export function LineChart({ data, height = 200, formatValue = currencyFormat }) {
   const [hoveredPoint, setHoveredPoint] = useState(null);
 
   if (!data || data.length === 0) return <div className="chart-empty">No data available</div>;
@@ -150,7 +152,7 @@ export function LineChart({ data, height = 200 }) {
               textAnchor="end"
               className="chart-grid-text"
             >
-              ₹{line.val.toLocaleString()}
+              {formatValue(line.val)}
             </text>
           </g>
         ))}
@@ -222,7 +224,7 @@ export function LineChart({ data, height = 200 }) {
           }}
         >
           <div className="chart-tooltip__label">{hoveredPoint.label}</div>
-          <div className="chart-tooltip__value">₹{hoveredPoint.value.toLocaleString()}</div>
+          <div className="chart-tooltip__value">{formatValue(hoveredPoint.value)}</div>
         </div>
       )}
     </div>
@@ -230,7 +232,7 @@ export function LineChart({ data, height = 200 }) {
 }
 
 // 3. BarChart (Horizontal for Vehicles, Vertical for Revenue optionally)
-export function BarChart({ data }) {
+export function BarChart({ data, formatValue = currencyFormat }) {
   const [hoveredBar, setHoveredBar] = useState(null);
 
   if (!data || data.length === 0) return <div className="chart-empty">No data available</div>;
@@ -262,7 +264,7 @@ export function BarChart({ data }) {
                 />
               </div>
               <div className="hbar-list__value mono">
-                ₹{item.value.toLocaleString()}
+                {formatValue(item.value)}
               </div>
             </div>
           );
@@ -270,7 +272,7 @@ export function BarChart({ data }) {
       </div>
       {hoveredBar && (
         <div className="bar-tooltip">
-          <strong>{hoveredBar.label}</strong>: ₹{hoveredBar.value.toLocaleString()}
+          <strong>{hoveredBar.label}</strong>: {formatValue(hoveredBar.value)}
         </div>
       )}
     </div>

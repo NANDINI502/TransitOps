@@ -207,7 +207,7 @@ export default function Dashboard() {
               <div className="spinner" /> Loading…
             </div>
           ) : (
-            <BarChart data={vehiclesByType} />
+            <BarChart data={vehiclesByType} formatValue={(v) => `${v} vehicle${v === 1 ? '' : 's'}`} />
           )}
         </div>
       </div>
