@@ -34,6 +34,7 @@ export default function Dashboard() {
   const [breakdown, setBreakdown] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -62,8 +63,17 @@ export default function Dashboard() {
     ? Math.max(1, ...BREAKDOWN_DEFS.map((d) => Number(breakdown[d.key]) || 0))
     : 1;
 
+  const visibleTrips = search.trim()
+    ? recentTrips.filter((r) => {
+        const needle = search.trim().toLowerCase();
+        return [r.trip_no, r.id, r.vehicle_name, r.vehicle, r.driver_name, r.driver]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(needle));
+      })
+    : recentTrips;
+
   return (
-    <Layout>
+    <Layout onSearchChange={setSearch} searchPlaceholder="Search trips, vehicles, drivers…">
       <PageHeader
         title="Dashboard"
         description="Live overview of fleet activity, trips, and utilization."
@@ -121,7 +131,7 @@ export default function Dashboard() {
               { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status} /> },
               { key: 'eta', header: 'ETA', render: (r) => r.eta || '—' },
             ]}
-            rows={recentTrips}
+            rows={visibleTrips}
           />
         </div>
 
