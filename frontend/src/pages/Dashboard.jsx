@@ -5,6 +5,7 @@ import StatCard from '../components/StatCard';
 import DataTable from '../components/DataTable';
 import StatusPill from '../components/StatusPill';
 import { dashboardApi, ApiError } from '../api/client';
+import { DonutChart } from '../components/Charts';
 
 const VEHICLE_TYPES = ['All Types', 'Truck', 'Van', 'Bus', 'Car'];
 const STATUS_OPTIONS = ['All Statuses', 'Available', 'On Trip', 'In Shop', 'Retired'];
@@ -18,13 +19,6 @@ const KPI_DEFS = [
   { key: 'pending_trips', label: 'Pending Trips', accent: 'gray' },
   { key: 'drivers_on_duty', label: 'Drivers On Duty', accent: 'green' },
   { key: 'fleet_utilization_pct', label: 'Fleet Utilization', accent: 'default', suffix: '%' },
-];
-
-const BREAKDOWN_DEFS = [
-  { key: 'available', label: 'Available', tone: 'green' },
-  { key: 'on_trip', label: 'On Trip', tone: 'blue' },
-  { key: 'in_shop', label: 'In Shop', tone: 'amber' },
-  { key: 'retired', label: 'Retired', tone: 'red' },
 ];
 
 export default function Dashboard() {
@@ -58,10 +52,6 @@ export default function Dashboard() {
   useEffect(() => {
     load();
   }, [load]);
-
-  const maxBreakdown = breakdown
-    ? Math.max(1, ...BREAKDOWN_DEFS.map((d) => Number(breakdown[d.key]) || 0))
-    : 1;
 
   const visibleTrips = search.trim()
     ? recentTrips.filter((r) => {
@@ -143,37 +133,19 @@ export default function Dashboard() {
               <div className="spinner" /> Loading…
             </div>
           ) : (
-            <div className="vbreakdown">
-              {BREAKDOWN_DEFS.map((d) => {
-                const count = breakdown ? Number(breakdown[d.key]) || 0 : 0;
-                const pct = Math.round((count / maxBreakdown) * 100);
-                return (
-                  <div className="vbreakdown__row" key={d.key}>
-                    <div className="vbreakdown__label">
-                      <StatusPill tone={d.tone}>{d.label}</StatusPill>
-                    </div>
-                    <div className="vbreakdown__bar-track">
-                      <div className={`vbreakdown__bar vbreakdown__bar--${d.tone}`} style={{ width: `${pct}%` }} />
-                    </div>
-                    <div className="vbreakdown__count mono">{count}</div>
-                  </div>
-                );
-              })}
-            </div>
+            <DonutChart
+              data={[
+                { label: 'Available', value: breakdown ? Number(breakdown.available) || 0 : 0, tone: 'green' },
+                { label: 'On Trip', value: breakdown ? Number(breakdown.on_trip) || 0 : 0, tone: 'blue' },
+                { label: 'In Shop', value: breakdown ? Number(breakdown.in_shop) || 0 : 0, tone: 'amber' },
+                { label: 'Retired', value: breakdown ? Number(breakdown.retired) || 0 : 0, tone: 'red' },
+              ]}
+            />
           )}
         </div>
       </div>
 
       <style>{`
-        .vbreakdown { display: flex; flex-direction: column; gap: 16px; }
-        .vbreakdown__row { display: grid; grid-template-columns: 110px 1fr 32px; align-items: center; gap: 12px; }
-        .vbreakdown__bar-track { height: 10px; background: var(--bg-elevated); border-radius: 999px; overflow: hidden; }
-        .vbreakdown__bar { height: 100%; border-radius: 999px; transition: width 0.3s ease; }
-        .vbreakdown__bar--green { background: var(--status-green); }
-        .vbreakdown__bar--blue { background: var(--status-blue); }
-        .vbreakdown__bar--amber { background: var(--status-amber); }
-        .vbreakdown__bar--red { background: var(--status-red); }
-        .vbreakdown__count { text-align: right; font-size: 13px; color: var(--text-secondary); }
       `}</style>
     </Layout>
   );

@@ -11,6 +11,7 @@ import Trips from './pages/Trips';
 import Maintenance from './pages/Maintenance';
 import FuelExpenses from './pages/FuelExpenses';
 import Analytics from './pages/Analytics';
+import VehicleHealth from './pages/VehicleHealth';
 import Settings from './pages/Settings';
 
 export default function App() {
@@ -74,6 +75,14 @@ export default function App() {
             element={
               <ProtectedRoute module="analytics">
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vehicle-health"
+            element={
+              <ProtectedRoute module="fleet">
+                <VehicleHealth />
               </ProtectedRoute>
             }
           />

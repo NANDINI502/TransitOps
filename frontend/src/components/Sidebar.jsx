@@ -11,6 +11,7 @@ const NAV_ITEMS = [
   { to: '/maintenance', label: 'Maintenance', icon: MaintenanceIcon, module: 'fleet' },
   { to: '/fuel-expenses', label: 'Fuel & Expenses', icon: FuelIcon, module: 'fuelExp' },
   { to: '/analytics', label: 'Analytics', icon: AnalyticsIcon, module: 'analytics' },
+  { to: '/vehicle-health', label: 'Vehicle Health', icon: VehicleHealthIcon, module: 'fleet' },
   { to: '/settings', label: 'Settings', icon: SettingsIcon, module: null },
 ];
 
@@ -105,6 +106,13 @@ function AnalyticsIcon() {
   return (
     <svg {...iconProps()}>
       <path d="M4 20V10M11 20V4M18 20v-7" />
+    </svg>
+  );
+}
+function VehicleHealthIcon() {
+  return (
+    <svg {...iconProps()}>
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z" />
     </svg>
   );
 }
