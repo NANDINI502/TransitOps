@@ -439,7 +439,7 @@ function renderTrips(){
       actions = `<span style="color:var(--muted);font-size:12px;">—</span>`;
     }
     return `<tr>
-      <td>${t.source} → ${t.destination}<div class="hint">${t.cargo_weight != null ? t.cargo_weight + 'kg' : '—'} · ${t.planned_distance != null ? t.planned_distance + 'km' : '—'}</div></td>
+      <td>${t.source} → ${t.destination}<div class="hint">${t.cargo_weight_kg != null ? t.cargo_weight_kg + 'kg' : '—'} · ${t.planned_distance_km != null ? t.planned_distance_km + 'km' : '—'}</div></td>
       <td>${t.vehicle_name || '—'}<div class="hint">${t.driver_name || '—'}</div></td>
       <td><span class="status-pill status-${t.status}">${t.status}</span></td>
       <td><div class="actions">
@@ -467,6 +467,19 @@ function validateCargo(){
 vehicleSelect.addEventListener('change', validateCargo);
 cargoInput.addEventListener('input', validateCargo);
 
+// ---------- Trip number sequence (mirrors backend meta/counters.trip_seq) ----------
+async function nextTripNo(){
+  const counterRef = db.collection('meta').doc('counters');
+  const seq = await db.runTransaction(async (t) => {
+    const snap = await t.get(counterRef);
+    const current = snap.exists ? (snap.data().trip_seq || 0) : 0;
+    const next = current + 1;
+    t.set(counterRef, { trip_seq: next }, { merge: true });
+    return next;
+  });
+  return `TR${String(seq).padStart(3, '0')}`;
+}
+
 // ---------- Create Trip ----------
 createBtn.addEventListener('click', async () => {
   const source = sourceInput.value.trim();
@@ -492,15 +505,23 @@ createBtn.addEventListener('click', async () => {
   createBtn.textContent = 'Creating…';
 
   try {
+    const tripNo = await nextTripNo();
     await db.collection('trips').add({
+      trip_no: tripNo,
       source, destination,
       vehicle_id: vehicleId,
       vehicle_name: `${vehicle.name} (${vehicle.reg_no})`,
+      vehicle_reg_no: vehicle.reg_no,
       driver_id: driverId,
       driver_name: driver.name,
-      cargo_weight: cargo,
-      planned_distance: distance,
+      cargo_weight_kg: cargo,
+      planned_distance_km: distance,
       status: 'Draft',
+      dispatched_at: null,
+      completed_at: null,
+      final_odometer_km: null,
+      fuel_consumed_l: null,
+      revenue: 0,
       created_at: new Date().toISOString()
     });
     showBanner('Trip created as Draft.', true);
@@ -626,7 +647,7 @@ function guessCoords(placeText){
 const AVG_SPEED_KMH = 40; // assumed average speed for simulated progress
 
 function computeTripProgress(trip){
-  const planned = Number(trip.planned_distance) || 0;
+  const planned = Number(trip.planned_distance_km) || 0;
   let kmDriven = 0;
   let etaHours = null;
   let fraction = 0;
@@ -719,7 +740,7 @@ function renderModalContent(){
 
   document.getElementById('progressFill').style.width = (fraction * 100).toFixed(0) + '%';
   document.getElementById('statKmDriven').textContent =
-    `${kmDriven} / ${trip.planned_distance != null ? trip.planned_distance : '—'} km`;
+    `${kmDriven} / ${trip.planned_distance_km != null ? trip.planned_distance_km : '—'} km`;
   document.getElementById('statEta').textContent = formatEta(etaHours);
   document.getElementById('statStatus').textContent = trip.status;
 
