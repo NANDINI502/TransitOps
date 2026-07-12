@@ -177,6 +177,10 @@ class TripCancelRequest(BaseModel):
     reason: Optional[str] = None
 
 
+class TripFlagRequest(BaseModel):
+    issue_flagged: bool
+
+
 class TripOut(BaseModel):
     id: str
     trip_no: str
@@ -195,6 +199,7 @@ class TripOut(BaseModel):
     final_odometer_km: Optional[float] = None
     fuel_consumed_l: Optional[float] = None
     revenue: Optional[float] = 0
+    issue_flagged: bool = False
     created_at: Optional[str] = None
 
 

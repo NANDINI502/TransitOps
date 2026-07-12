@@ -1,0 +1,72 @@
+.trip-tracking__map {
+  height: 320px;
+  width: 100%;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+  margin-bottom: 16px;
+  background: var(--bg-elevated);
+}
+
+.trip-tracking__progress-bar {
+  height: 6px;
+  background: var(--bg-elevated);
+  border-radius: 20px;
+  overflow: hidden;
+  margin: 14px 0;
+}
+
+.trip-tracking__progress-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 20px;
+  transition: width 0.3s;
+}
+
+.trip-tracking__stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+.trip-tracking__stat {
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+}
+
+.trip-tracking__stat-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.trip-tracking__stat-value {
+  font-size: 18px;
+  font-weight: 600;
+  margin-top: 4px;
+  color: var(--text-primary);
+}
+
+.trip-tracking__issue-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg-panel-alt);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+
+.trip-tracking__issue-status {
+  font-size: 13px;
+  font-weight: 600;
+  margin-top: 4px;
+  color: var(--status-green);
+}
+
+.trip-tracking__issue-status--flagged {
+  color: var(--status-red);
+}

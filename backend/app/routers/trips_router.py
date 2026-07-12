@@ -11,6 +11,7 @@ from app.models.schemas import (
     TripCompleteRequest,
     TripCreate,
     TripDispatchRequest,
+    TripFlagRequest,
     TripOut,
 )
 from app.utils.firestore_helpers import doc_to_dict, get_all_cached, invalidate_cache, next_trip_no, utcnow_iso
@@ -123,6 +124,7 @@ def create_trip(body: TripCreate, user: CurrentUser = Depends(require_module_acc
         final_odometer_km=None,
         fuel_consumed_l=None,
         revenue=0,
+        issue_flagged=False,
         created_at=utcnow_iso(),
     )
 
@@ -297,4 +299,20 @@ def cancel_trip(
     if was_dispatched:
         invalidate_cache("vehicles")
         invalidate_cache("drivers")
+    return enrich_trip(doc_to_dict(trip_ref.get()))
+
+
+@router.patch("/{trip_id}/flag", response_model=TripOut)
+def flag_trip(
+    trip_id: str,
+    body: TripFlagRequest,
+    user: CurrentUser = Depends(require_module_access("trips", "full")),
+):
+    trip_ref = db.collection("trips").document(trip_id)
+    trip_doc = trip_ref.get()
+    if not trip_doc.exists:
+        raise HTTPException(status_code=404, detail="Trip not found")
+
+    trip_ref.update({"issue_flagged": body.issue_flagged})
+    invalidate_cache("trips")
     return enrich_trip(doc_to_dict(trip_ref.get()))

@@ -124,6 +124,7 @@ export const tripsApi = {
   dispatch: (id) => post(`/trips/${id}/dispatch`),
   complete: (id, payload) => post(`/trips/${id}/complete`, payload),
   cancel: (id) => post(`/trips/${id}/cancel`),
+  flag: (id, issueFlagged) => patch(`/trips/${id}/flag`, { issue_flagged: issueFlagged }),
 };
 
 export const maintenanceApi = {

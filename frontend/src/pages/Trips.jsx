@@ -4,6 +4,7 @@ import PageHeader from '../components/PageHeader';
 import StatusPill from '../components/StatusPill';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
+import TripTrackingModal from '../components/TripTrackingModal';
 import { tripsApi, vehiclesApi, driversApi, riskApi, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { canEdit } from '../lib/roles';
@@ -38,6 +39,8 @@ export default function Trips() {
 
   const [actionError, setActionError] = useState(null);
   const [busyTripId, setBusyTripId] = useState(null);
+
+  const [trackingTrip, setTrackingTrip] = useState(null);
 
   const [completeModal, setCompleteModal] = useState(null);
   const [completeForm, setCompleteForm] = useState({ final_odometer_km: '', fuel_consumed_l: '', fuel_cost: '', revenue: '' });
@@ -392,6 +395,9 @@ export default function Trips() {
                   </div>
                   <div className="trip-card__note">{trip.status_note || trip.eta || 'Awaiting driver'}</div>
                   <div className="trip-card__actions">
+                    <Button size="sm" variant="secondary" onClick={() => setTrackingTrip(trip)}>
+                      Track
+                    </Button>
                     {String(trip.status).toLowerCase() === 'draft' && editable ? (
                       <>
                         <Button size="sm" onClick={() => doDispatch(trip)} disabled={busyTripId === trip.id}>
@@ -475,6 +481,15 @@ export default function Trips() {
           </div>
         </form>
       </Modal>
+
+      <TripTrackingModal
+        trip={trackingTrip}
+        onClose={() => setTrackingTrip(null)}
+        onChanged={(updated) => {
+          setTrackingTrip(updated);
+          setTrips((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+        }}
+      />
     </Layout>
   );
 }
