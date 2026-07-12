@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -14,6 +15,11 @@ import Analytics from './pages/Analytics';
 import Settings from './pages/Settings';
 
 export default function App() {
+  useEffect(() => {
+    const saved = localStorage.getItem('transitops:theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', saved);
+  }, []);
+
   return (
     <BrowserRouter>
       <AuthProvider>

@@ -166,8 +166,6 @@ export default function Trips() {
     }
   };
 
-  const stageIndex = (status) => Math.max(0, STAGES.findIndex((s) => s.toLowerCase() === String(status).toLowerCase()));
-
   return (
     <Layout>
       <PageHeader title="Trips / Trip Dispatcher" description="Create, dispatch, and track trips through their lifecycle." />

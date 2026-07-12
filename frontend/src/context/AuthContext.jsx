@@ -29,6 +29,12 @@ export function AuthProvider({ children }) {
   }, []);
 
   useEffect(() => {
+    const localUser = localStorage.getItem('transitops:local_user');
+    if (localUser) {
+      const parsed = JSON.parse(localUser);
+      setFirebaseUser({ uid: parsed.uid, email: parsed.email });
+      setProfile(parsed);
+    }
     if (!auth) {
       setLoading(false);
       return;
@@ -59,6 +65,24 @@ export function AuthProvider({ children }) {
   const login = useCallback(async (email, password, rememberMe) => {
     setAuthError(null);
     if (!auth) {
+      if (email.endsWith('@transitops.demo') && password === 'Demo@123') {
+        const rolePart = email.split('@')[0];
+        const role = rolePart === 'fleetmanager' ? 'fleet_manager' :
+                     rolePart === 'dispatcher' ? 'dispatcher' :
+                     rolePart === 'safety' ? 'safety_officer' :
+                     rolePart === 'finance' ? 'financial_analyst' : 'fleet_manager';
+        const user = {
+          uid: 'local-uid-' + role,
+          email,
+          name: rolePart.toUpperCase(),
+          role,
+        };
+        localStorage.setItem(REMEMBER_KEY, rememberMe ? '1' : '0');
+        localStorage.setItem('transitops:local_user', JSON.stringify(user));
+        setFirebaseUser({ uid: user.uid, email: user.email });
+        setProfile(user);
+        return 'local-jwt-token';
+      }
       const msg = 'Firebase is not configured. Set VITE_FIREBASE_* env vars.';
       setAuthError(msg);
       throw new Error(msg);
@@ -71,7 +95,7 @@ export function AuthProvider({ children }) {
       try {
         const me = await authApi.me();
         setProfile(me);
-      } catch (err) {
+      } catch {
         setProfile({
           uid: cred.user.uid,
           email: cred.user.email,
@@ -88,6 +112,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
+    localStorage.removeItem('transitops:local_user');
     if (auth) await firebaseSignOut(auth);
     setProfile(null);
     setFirebaseUser(null);

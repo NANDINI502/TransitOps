@@ -14,14 +14,17 @@ const NAV_ITEMS = [
   { to: '/settings', label: 'Settings', icon: SettingsIcon, module: null },
 ];
 
-export default function Sidebar() {
+export default function Sidebar({ isOpen, onClose }) {
   const { role } = useAuth();
 
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${isOpen ? 'sidebar--open' : ''}`}>
       <div className="sidebar__brand">
         <span className="sidebar__brand-mark">T</span>
         <span className="sidebar__brand-word">TransitOps</span>
+        <button className="sidebar__close" onClick={onClose} aria-label="Close sidebar">
+          &times;
+        </button>
       </div>
       <nav className="sidebar__nav">
         {NAV_ITEMS.map((item) => {
@@ -32,6 +35,7 @@ export default function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
+              onClick={onClose}
               className={({ isActive }) => `sidebar__link${isActive ? ' sidebar__link--active' : ''}`}
             >
               <Icon />
