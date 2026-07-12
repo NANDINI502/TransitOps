@@ -9,6 +9,7 @@ load_dotenv()
 from app.routers import (
     analytics_router,
     auth_router,
+    chat_router,
     dashboard_router,
     drivers_router,
     expenses_router,
@@ -39,6 +40,7 @@ app.include_router(fuel_logs_router.router)
 app.include_router(expenses_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(analytics_router.router)
+app.include_router(chat_router.router)
 
 
 @app.get("/api/health")

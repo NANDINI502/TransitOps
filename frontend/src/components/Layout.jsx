@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import Topbar from './Topbar';
+import ChatWidget from './ChatWidget';
 import './Layout.css';
 
 const SECTION_LABELS = {
@@ -39,6 +40,7 @@ export default function Layout({ children, onSearchChange, searchPlaceholder }) 
         />
         <main className="app-shell__content">{children}</main>
       </div>
+      <ChatWidget />
     </div>
   );
 }

@@ -43,9 +43,14 @@ export default function Analytics() {
     }
   };
 
-  const monthlyRevenue = summary?.monthly_revenue || [];
-  const maxRevenue = Math.max(1, ...monthlyRevenue.map((m) => Number(m.revenue) || 0));
-  const maxCostliest = Math.max(1, ...topCostliest.map((v) => Number(v.total_cost) || 0));
+  const perVehicleRoi = summary?.per_vehicle_roi || [];
+  const totalRevenue = perVehicleRoi.reduce((sum, v) => sum + (Number(v.revenue) || 0), 0);
+  const avgRoiPct = perVehicleRoi.length
+    ? (perVehicleRoi.reduce((sum, v) => sum + (Number(v.roi) || 0), 0) / perVehicleRoi.length) * 100
+    : 0;
+  const topRevenue = [...perVehicleRoi].sort((a, b) => (b.revenue || 0) - (a.revenue || 0)).slice(0, 8);
+  const maxRevenue = Math.max(1, ...topRevenue.map((v) => Number(v.revenue) || 0));
+  const maxCostliest = Math.max(1, ...topCostliest.map((v) => Number(v.total_operational_cost ?? v.total_cost) || 0));
 
   return (
     <Layout>
@@ -63,13 +68,13 @@ export default function Analytics() {
       {exportError ? <div className="error-banner">{exportError}</div> : null}
 
       <div className="stat-grid">
-        <StatCard label="Fuel Efficiency" value={loading ? '—' : summary?.fuel_efficiency_kmpl ?? 0} suffix="km/l" />
+        <StatCard label="Fuel Efficiency" value={loading ? '—' : summary?.fuel_efficiency_km_per_l ?? 0} suffix="km/l" />
         <StatCard label="Fleet Utilization" value={loading ? '—' : summary?.fleet_utilization_pct ?? 0} suffix="%" />
         <StatCard
           label="Operational Cost"
-          value={loading ? '—' : `₹${Number(summary?.operational_cost ?? 0).toLocaleString()}`}
+          value={loading ? '—' : `₹${Number(summary?.total_operational_cost ?? 0).toLocaleString()}`}
         />
-        <StatCard label="Vehicle ROI" value={loading ? '—' : summary?.vehicle_roi_pct ?? 0} suffix="%" />
+        <StatCard label="Avg. Vehicle ROI" value={loading ? '—' : Number(avgRoiPct.toFixed(1))} suffix="%" />
       </div>
       <p className="helper-text" style={{ marginTop: -10, marginBottom: 20 }}>
         ROI = (Revenue − (Maintenance + Fuel)) / Acquisition Cost
@@ -77,22 +82,22 @@ export default function Analytics() {
 
       <div className="two-col">
         <div className="panel">
-          <h3 className="panel__title">Monthly Revenue</h3>
+          <h3 className="panel__title">Top Revenue by Vehicle</h3>
           {loading ? (
             <div className="data-table__state">
               <div className="spinner" /> Loading…
             </div>
-          ) : monthlyRevenue.length === 0 ? (
+          ) : topRevenue.length === 0 || totalRevenue === 0 ? (
             <div className="data-table__state">No revenue data yet.</div>
           ) : (
             <div className="bar-chart">
-              {monthlyRevenue.map((m) => {
-                const h = Math.max(4, Math.round((Number(m.revenue) / maxRevenue) * 160));
+              {topRevenue.map((v) => {
+                const h = Math.max(4, Math.round((Number(v.revenue) / maxRevenue) * 160));
                 return (
-                  <div className="bar-chart__col" key={m.month}>
-                    <div className="bar-chart__value">₹{Number(m.revenue).toLocaleString()}</div>
+                  <div className="bar-chart__col" key={v.vehicle_id}>
+                    <div className="bar-chart__value">₹{Number(v.revenue).toLocaleString()}</div>
                     <div className="bar-chart__bar" style={{ height: `${h}px` }} />
-                    <div className="bar-chart__label">{m.month}</div>
+                    <div className="bar-chart__label">{v.reg_no || v.name}</div>
                   </div>
                 );
               })}
@@ -111,14 +116,15 @@ export default function Analytics() {
           ) : (
             <div className="hbar-list">
               {topCostliest.map((v) => {
-                const pct = Math.round((Number(v.total_cost) / maxCostliest) * 100);
+                const cost = Number(v.total_operational_cost ?? v.total_cost) || 0;
+                const pct = Math.round((cost / maxCostliest) * 100);
                 return (
                   <div className="hbar-list__row" key={v.vehicle_id || v.reg_no}>
                     <div className="hbar-list__label">{v.reg_no || v.name}</div>
                     <div className="hbar-list__track">
                       <div className="hbar-list__bar" style={{ width: `${pct}%` }} />
                     </div>
-                    <div className="hbar-list__value mono">₹{Number(v.total_cost).toLocaleString()}</div>
+                    <div className="hbar-list__value mono">₹{cost.toLocaleString()}</div>
                   </div>
                 );
               })}

@@ -2,14 +2,14 @@ import { useEffect, useState, useCallback, useMemo } from 'react';
 import Layout from '../components/Layout';
 import PageHeader from '../components/PageHeader';
 import DataTable from '../components/DataTable';
-import StatusPill from '../components/StatusPill';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
 import { fuelApi, expensesApi, vehiclesApi, tripsApi, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { canEdit } from '../lib/roles';
 
-const EXPENSE_CATEGORIES = ['Toll', 'Parking', 'Fine', 'Other'];
+const EXPENSE_CATEGORIES = ['toll', 'misc', 'other'];
+const EXPENSE_CATEGORY_LABELS = { toll: 'Toll', misc: 'Misc', other: 'Other' };
 
 const emptyFuelForm = { vehicle_id: '', trip_id: '', liters: '', cost: '', date: new Date().toISOString().slice(0, 10) };
 const emptyExpenseForm = { vehicle_id: '', trip_id: '', category: EXPENSE_CATEGORIES[0], amount: '', date: new Date().toISOString().slice(0, 10) };
@@ -88,11 +88,8 @@ export default function FuelExpenses() {
   }, [expenses, search, vehicles, trips]);
 
   const totalFuelCost = useMemo(() => fuelLogs.reduce((sum, f) => sum + (Number(f.cost) || 0), 0), [fuelLogs]);
-  const totalMaintFromExpenses = useMemo(
-    () => expenses.reduce((sum, e) => sum + (Number(e.maintenance_linked_cost) || 0), 0),
-    [expenses]
-  );
-  const totalOperationalCost = totalFuelCost + totalMaintFromExpenses;
+  const totalExpensesCost = useMemo(() => expenses.reduce((sum, e) => sum + (Number(e.amount) || 0), 0), [expenses]);
+  const totalOperationalCost = totalFuelCost + totalExpensesCost;
 
   const submitFuel = async (e) => {
     e.preventDefault();
@@ -189,27 +186,15 @@ export default function FuelExpenses() {
           columns={[
             { key: 'trip', header: 'Trip', render: (r) => r.trip_no || tripLabel(r.trip_id) },
             { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
-            { key: 'toll', header: 'Toll', align: 'right', render: (r) => (r.category === 'Toll' ? `₹${Number(r.amount || 0).toLocaleString()}` : '—') },
-            { key: 'other', header: 'Other', align: 'right', render: (r) => (r.category !== 'Toll' ? `₹${Number(r.amount || 0).toLocaleString()}` : '—') },
-            {
-              key: 'maint_linked',
-              header: 'Maint. Linked',
-              align: 'right',
-              render: (r) => (r.maintenance_linked_cost != null ? `₹${Number(r.maintenance_linked_cost).toLocaleString()}` : '—'),
-            },
-            {
-              key: 'total',
-              header: 'Total',
-              align: 'right',
-              render: (r) => `₹${(Number(r.amount || 0) + Number(r.maintenance_linked_cost || 0)).toLocaleString()}`,
-            },
-            { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status || 'Draft'} /> },
+            { key: 'category', header: 'Category', render: (r) => EXPENSE_CATEGORY_LABELS[r.category] || r.category },
+            { key: 'date', header: 'Date', render: (r) => (r.date || '').slice(0, 10) },
+            { key: 'amount', header: 'Amount', align: 'right', render: (r) => `₹${Number(r.amount || 0).toLocaleString()}` },
           ]}
         />
       </div>
 
       <div className="cost-summary-bar">
-        <span>Total Operational Cost (Auto) = Fuel + Maint</span>
+        <span>Total Operational Cost (Auto) = Fuel + Expenses</span>
         <strong>₹{totalOperationalCost.toLocaleString()}</strong>
       </div>
 

@@ -148,4 +148,8 @@ export const analyticsApi = {
   exportCsv: () => download('/analytics/export.csv'),
 };
 
+export const chatApi = {
+  send: (messages) => post('/chat', { messages }),
+};
+
 export { BASE_URL };
