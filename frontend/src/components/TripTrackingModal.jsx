@@ -88,16 +88,15 @@ export default function TripTrackingModal({ trip, onClose, onChanged }) {
   useEffect(() => {
     if (!trip || !mapElRef.current) return undefined;
 
-    if (!mapRef.current) {
-      mapRef.current = L.map(mapElRef.current);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors',
-        maxZoom: 18,
-      }).addTo(mapRef.current);
-    }
+    mapRef.current = L.map(mapElRef.current);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 18,
+    }).addTo(mapRef.current);
 
     const render = () => {
       const map = mapRef.current;
+      if (!map) return;
       const srcCoords = guessCoords(trip.source) || CITY_COORDS.mumbai;
       const destCoords = guessCoords(trip.destination) || CITY_COORDS.pune;
       const { fraction } = computeTripProgress(trip);
@@ -128,20 +127,14 @@ export default function TripTrackingModal({ trip, onClose, onChanged }) {
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
-    };
-  }, [trip]);
-
-  useEffect(
-    () => () => {
       if (mapRef.current) {
         mapRef.current.remove();
         mapRef.current = null;
-        markerRef.current = null;
-        lineRef.current = null;
       }
-    },
-    []
-  );
+      markerRef.current = null;
+      lineRef.current = null;
+    };
+  }, [trip?.id]);
 
   if (!trip) return null;
 
