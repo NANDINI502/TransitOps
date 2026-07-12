@@ -147,7 +147,7 @@
 }
 
 .chat-widget__msg--assistant .chat-widget__bubble {
-  background: #fff;
+  background: var(--bg-panel);
   color: var(--text-primary);
   border: 1px solid var(--border-subtle);
   border-bottom-left-radius: 3px;

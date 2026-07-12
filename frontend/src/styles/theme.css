@@ -45,6 +45,84 @@
   color-scheme: light;
 }
 
+:root[data-theme='dark'] {
+  --bg-app: #17141a;
+  --bg-panel: #211d25;
+  --bg-panel-alt: #262129;
+  --bg-elevated: #2b262f;
+  --bg-hover: #322c36;
+  --border-subtle: #362f3a;
+  --border-strong: #453c4a;
+
+  --text-primary: #f0ecee;
+  --text-secondary: #b6adb4;
+  --text-muted: #8a818a;
+
+  --accent: #c297b8;
+  --accent-strong: #d8b3cd;
+  --accent-soft: rgba(194, 151, 184, 0.16);
+
+  --secondary: #3fd1ce;
+  --secondary-strong: #6adfdc;
+  --secondary-soft: rgba(63, 209, 206, 0.16);
+
+  --status-green: #4cbf85;
+  --status-green-soft: rgba(76, 191, 133, 0.16);
+  --status-blue: #6b9bef;
+  --status-blue-soft: rgba(107, 155, 239, 0.16);
+  --status-amber: #e0ab4d;
+  --status-amber-soft: rgba(224, 171, 77, 0.18);
+  --status-red: #e2726f;
+  --status-red-soft: rgba(226, 114, 111, 0.16);
+  --status-gray: #a39aa1;
+  --status-gray-soft: rgba(163, 154, 161, 0.16);
+
+  --shadow-elevated: 0 4px 14px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.35);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']):not([data-theme='dark']) {
+    --bg-app: #17141a;
+    --bg-panel: #211d25;
+    --bg-panel-alt: #262129;
+    --bg-elevated: #2b262f;
+    --bg-hover: #322c36;
+    --border-subtle: #362f3a;
+    --border-strong: #453c4a;
+
+    --text-primary: #f0ecee;
+    --text-secondary: #b6adb4;
+    --text-muted: #8a818a;
+
+    --accent: #c297b8;
+    --accent-strong: #d8b3cd;
+    --accent-soft: rgba(194, 151, 184, 0.16);
+
+    --secondary: #3fd1ce;
+    --secondary-strong: #6adfdc;
+    --secondary-soft: rgba(63, 209, 206, 0.16);
+
+    --status-green: #4cbf85;
+    --status-green-soft: rgba(76, 191, 133, 0.16);
+    --status-blue: #6b9bef;
+    --status-blue-soft: rgba(107, 155, 239, 0.16);
+    --status-amber: #e0ab4d;
+    --status-amber-soft: rgba(224, 171, 77, 0.18);
+    --status-red: #e2726f;
+    --status-red-soft: rgba(226, 114, 111, 0.16);
+    --status-gray: #a39aa1;
+    --status-gray-soft: rgba(163, 154, 161, 0.16);
+
+    --shadow-elevated: 0 4px 14px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.35);
+
+    color-scheme: dark;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
