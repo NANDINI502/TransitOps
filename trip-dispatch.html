@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TransitOps — Trip Dispatch</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root{
+    --bg:#0f1420;
+    --panel:#161d2e;
+    --panel-2:#1c2436;
+    --border:#2a3349;
+    --text:#e8ecf5;
+    --muted:#8891a7;
+    --accent:#4f7cff;
+    --accent-2:#2fd18f;
+    --danger:#ff5d6c;
+    --warn:#ffb454;
+    --radius:10px;
+    --mono: 'Consolas', 'SFMono-Regular', Menlo, monospace;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+    padding:24px;
+  }
+  h1{font-size:20px;margin:0 0 4px;}
+  .subtitle{color:var(--muted);font-size:13px;margin-bottom:24px;}
+  .grid{display:grid;grid-template-columns:1fr 1.3fr;gap:20px;}
+  @media (max-width:900px){.grid{grid-template-columns:1fr;}}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:20px;
+  }
+  .card h2{font-size:15px;margin:0 0 16px;display:flex;align-items:center;gap:8px;}
+  .card h2 .tag{font-size:11px;background:var(--panel-2);color:var(--muted);padding:2px 8px;border-radius:20px;font-weight:400;}
+
+  label{display:block;font-size:12px;color:var(--muted);margin:14px 0 6px;}
+  label:first-child{margin-top:0;}
+  select,input{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    padding:10px 12px;
+    border-radius:8px;
+    font-size:14px;
+  }
+  select:focus,input:focus{outline:none;border-color:var(--accent);}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+  .hint{font-size:11px;color:var(--muted);margin-top:4px;}
+  .error-text{font-size:12px;color:var(--danger);margin-top:6px;display:none;}
+
+  button{
+    cursor:pointer;
+    border:none;
+    border-radius:8px;
+    padding:11px 18px;
+    font-size:14px;
+    font-weight:600;
+  }
+  .btn-primary{background:var(--accent);color:#fff;width:100%;margin-top:20px;}
+  .btn-primary:disabled{background:#33395a;color:var(--muted);cursor:not-allowed;}
+  .btn-small{background:var(--panel-2);color:var(--text);border:1px solid var(--border);font-size:12px;padding:6px 12px;}
+  .btn-small.dispatch{background:var(--accent);color:#fff;border:none;}
+  .btn-small.complete{background:var(--accent-2);color:#0f1420;border:none;}
+  .btn-small.cancel{background:transparent;color:var(--danger);border:1px solid var(--danger);}
+
+  .banner{
+    background:rgba(255,93,108,0.1);
+    border:1px solid var(--danger);
+    color:var(--danger);
+    padding:10px 14px;
+    border-radius:8px;
+    font-size:13px;
+    margin-bottom:16px;
+    display:none;
+  }
+  .banner.show{display:block;}
+  .banner.ok{background:rgba(47,209,143,0.1);border-color:var(--accent-2);color:var(--accent-2);}
+
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{
+    text-align:left;
+    color:var(--muted);
+    font-weight:500;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    padding:8px 10px;
+    border-bottom:1px solid var(--border);
+  }
+  td{padding:10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+  tr:last-child td{border-bottom:none;}
+
+  .status-pill{
+    display:inline-block;
+    padding:3px 10px;
+    border-radius:20px;
+    font-size:11px;
+    font-weight:600;
+  }
+  .status-Draft{background:rgba(136,145,167,0.15);color:var(--muted);}
+  .status-Dispatched{background:rgba(79,124,255,0.15);color:var(--accent);}
+  .status-Completed{background:rgba(47,209,143,0.15);color:var(--accent-2);}
+  .status-Cancelled{background:rgba(255,93,108,0.15);color:var(--danger);}
+
+  .actions{display:flex;gap:6px;flex-wrap:wrap;}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:30px 0;}
+  .loading{color:var(--muted);font-size:13px;}
+  code{background:var(--panel-2);padding:1px 6px;border-radius:4px;font-family:var(--mono);font-size:12px;}
+
+  /* Eye icon button */
+  .btn-eye{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    color:var(--text);
+    width:30px;height:30px;
+    border-radius:8px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0;
+  }
+  .btn-eye:hover{border-color:var(--accent);}
+
+  /* Modal */
+  .modal-overlay{
+    display:none;
+    position:fixed;inset:0;
+    background:rgba(5,8,15,0.75);
+    z-index:1000;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.show{display:flex;}
+  .modal{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    width:100%;
+    max-width:820px;
+    max-height:90vh;
+    overflow-y:auto;
+  }
+  .modal-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    padding:16px 20px;
+    border-bottom:1px solid var(--border);
+  }
+  .modal-header h3{margin:0;font-size:16px;}
+  .modal-close{background:transparent;color:var(--muted);font-size:20px;padding:2px 8px;}
+  .modal-close:hover{color:var(--text);}
+  .modal-body{padding:20px;}
+
+  #tripMap{
+    height:320px;
+    width:100%;
+    border-radius:8px;
+    border:1px solid var(--border);
+    margin-bottom:16px;
+    background:#0a0e17;
+  }
+  .stat-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:12px;
+    margin-bottom:14px;
+  }
+  .stat-box{
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+  }
+  .stat-box .label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.03em;}
+  .stat-box .value{font-size:18px;font-weight:600;margin-top:4px;}
+  .progress-bar{
+    height:6px;
+    background:var(--panel-2);
+    border-radius:20px;
+    overflow:hidden;
+    margin:14px 0;
+  }
+  .progress-fill{
+    height:100%;
+    background:var(--accent);
+    border-radius:20px;
+    transition:width 0.3s;
+  }
+  .issue-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    background:var(--panel-2);
+    border:1px solid var(--border);
+    border-radius:8px;
+    padding:12px 14px;
+  }
+  .issue-status{font-size:13px;font-weight:600;}
+  .issue-status.ok{color:var(--accent-2);}
+  .issue-status.flagged{color:var(--danger);}
+
+</style>
+</head>
+<body>
+
+<h1>Trip Dispatch Engine</h1>
+<div class="subtitle">Create, dispatch, and track trips</div>
+
+<div id="banner" class="banner"></div>
+
+<div class="grid">
+
+  <!-- CREATE TRIP FORM -->
+  <div class="card">
+    <h2>New Trip <span class="tag">Draft</span></h2>
+
+    <label for="source">Source</label>
+    <input id="source" type="text" placeholder="e.g. Mumbai Warehouse">
+
+    <label for="destination">Destination</label>
+    <input id="destination" type="text" placeholder="e.g. Pune Depot">
+
+    <div class="row">
+      <div>
+        <label for="vehicle">Vehicle</label>
+        <select id="vehicle"><option value="">Loading…</option></select>
+      </div>
+      <div>
+        <label for="driver">Driver</label>
+        <select id="driver"><option value="">Loading…</option></select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label for="cargo">Cargo weight (kg)</label>
+        <input id="cargo" type="number" min="0" placeholder="e.g. 450">
+      </div>
+      <div>
+        <label for="distance">Planned distance (km)</label>
+        <input id="distance" type="number" min="0" placeholder="e.g. 180">
+      </div>
+    </div>
+    <div id="cargoError" class="error-text"></div>
+
+    <button id="createBtn" class="btn-primary">Create Trip</button>
+  </div>
+
+  <!-- TRIPS LIST -->
+  <div class="card">
+    <h2>Trips <span class="tag" id="tripCount">0</span></h2>
+    <div id="tripsWrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Route</th>
+            <th>Vehicle / Driver</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tripsBody"></tbody>
+      </table>
+      <div id="emptyState" class="empty">No trips yet — create one on the left.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- LIVE TRACKING MODAL -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 id="modalTitle">Trip Detail</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div id="tripMap"></div>
+
+      <div class="progress-bar"><div class="progress-fill" id="progressFill" style="width:0%"></div></div>
+
+      <div class="stat-grid">
+        <div class="stat-box">
+          <div class="label">Km driven</div>
+          <div class="value" id="statKmDriven">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">ETA remaining</div>
+          <div class="value" id="statEta">—</div>
+        </div>
+        <div class="stat-box">
+          <div class="label">Status</div>
+          <div class="value" id="statStatus">—</div>
+        </div>
+      </div>
+
+      <div class="issue-row">
+        <div>
+          <div class="hint">Flagged issues</div>
+          <div class="issue-status" id="issueStatusText">No issues flagged</div>
+        </div>
+        <button class="btn-small" id="issueToggleBtn" onclick="toggleIssueFlag()">Flag issue</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+/* =========================================================
+   TransitOps — Trip Dispatch Engine (Unit 03)
+   Replace firebaseConfig below with your team's config
+   (get it from Firebase Console > Project Settings > General)
+   ========================================================= */
+const firebaseConfig = {
+  apiKey: "AIzaSyCiTnroCuf29q0Fd8NyJMQc7tFBK5SBZKo",
+  authDomain: "transitops-3c250.firebaseapp.com",
+  projectId: "transitops-3c250",
+  storageBucket: "transitops-3c250.firebasestorage.app",
+  messagingSenderId: "510449270924",
+  appId: "1:510449270924:web:cb3385de04d9de5489fba9"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+// ---------- State ----------
+let vehicles = [];
+let drivers = [];
+let trips = [];
+
+// ---------- DOM refs ----------
+const vehicleSelect = document.getElementById('vehicle');
+const driverSelect = document.getElementById('driver');
+const sourceInput = document.getElementById('source');
+const destInput = document.getElementById('destination');
+const cargoInput = document.getElementById('cargo');
+const distanceInput = document.getElementById('distance');
+const cargoError = document.getElementById('cargoError');
+const createBtn = document.getElementById('createBtn');
+const tripsBody = document.getElementById('tripsBody');
+const emptyState = document.getElementById('emptyState');
+const tripCount = document.getElementById('tripCount');
+const banner = document.getElementById('banner');
+
+function showBanner(msg, ok=false){
+  banner.textContent = msg;
+  banner.className = 'banner show' + (ok ? ' ok' : '');
+  setTimeout(()=> banner.classList.remove('show'), 4000);
+}
+
+// ---------- Load Vehicles (only Available, not Retired/In Shop) ----------
+function loadVehicles(){
+  db.collection('vehicles').onSnapshot(snap => {
+    vehicles = [];
+    snap.forEach(doc => vehicles.push({ id: doc.id, ...doc.data() }));
+    renderVehicleOptions();
+  });
+}
+
+function renderVehicleOptions(){
+  const selectable = vehicles.filter(v => v.status === 'Available');
+  vehicleSelect.innerHTML = '<option value="">Select vehicle</option>' +
+    selectable.map(v =>
+      `<option value="${v.id}" data-maxload="${v.max_load_kg}">${v.name} — ${v.reg_no} (max ${v.max_load_kg}kg)</option>`
+    ).join('');
+  if (selectable.length === 0){
+    vehicleSelect.innerHTML = '<option value="">No available vehicles</option>';
+  }
+}
+
+// ---------- Load Drivers (only Available, license not expired) ----------
+function loadDrivers(){
+  db.collection('drivers').onSnapshot(snap => {
+    drivers = [];
+    snap.forEach(doc => drivers.push({ id: doc.id, ...doc.data() }));
+    renderDriverOptions();
+  });
+}
+
+function renderDriverOptions(){
+  const today = new Date().toISOString().slice(0,10);
+  const selectable = drivers.filter(d =>
+    d.status === 'Available' && d.license_expiry >= today
+  );
+  driverSelect.innerHTML = '<option value="">Select driver</option>' +
+    selectable.map(d =>
+      `<option value="${d.id}">${d.name} — ${d.license_no}</option>`
+    ).join('');
+  if (selectable.length === 0){
+    driverSelect.innerHTML = '<option value="">No available drivers</option>';
+  }
+}
+
+// ---------- Load Trips ----------
+function loadTrips(){
+  db.collection('trips').orderBy('created_at', 'desc').onSnapshot(snap => {
+    trips = [];
+    snap.forEach(doc => trips.push({ id: doc.id, ...doc.data() }));
+    renderTrips();
+  });
+}
+
+function renderTrips(){
+  tripCount.textContent = trips.length;
+  if (trips.length === 0){
+    tripsBody.innerHTML = '';
+    emptyState.style.display = 'block';
+    return;
+  }
+  emptyState.style.display = 'none';
+
+  tripsBody.innerHTML = trips.map(t => {
+    let actions = '';
+    if (t.status === 'Draft'){
+      actions = `<button class="btn-small dispatch" onclick="dispatchTrip('${t.id}')">Dispatch</button>
+                 <button class="btn-small cancel" onclick="cancelTrip('${t.id}')">Cancel</button>`;
+    } else if (t.status === 'Dispatched'){
+      actions = `<button class="btn-small complete" onclick="completeTrip('${t.id}')">Complete</button>
+                 <button class="btn-small cancel" onclick="cancelTrip('${t.id}')">Cancel</button>`;
+    } else {
+      actions = `<span style="color:var(--muted);font-size:12px;">—</span>`;
+    }
+    return `<tr>
+      <td>${t.source} → ${t.destination}<div class="hint">${t.cargo_weight != null ? t.cargo_weight + 'kg' : '—'} · ${t.planned_distance != null ? t.planned_distance + 'km' : '—'}</div></td>
+      <td>${t.vehicle_name || '—'}<div class="hint">${t.driver_name || '—'}</div></td>
+      <td><span class="status-pill status-${t.status}">${t.status}</span></td>
+      <td><div class="actions">
+        <button class="btn-eye" title="View live tracking" onclick="openModal('${t.id}')">👁</button>
+        ${actions}
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+// ---------- Cargo weight live validation ----------
+function validateCargo(){
+  const vOpt = vehicleSelect.selectedOptions[0];
+  const maxLoad = vOpt ? Number(vOpt.dataset.maxload) : null;
+  const cargo = Number(cargoInput.value);
+
+  if (maxLoad && cargo > maxLoad){
+    cargoError.style.display = 'block';
+    cargoError.textContent = `Cargo weight exceeds vehicle capacity (${maxLoad}kg max)`;
+    return false;
+  }
+  cargoError.style.display = 'none';
+  return true;
+}
+vehicleSelect.addEventListener('change', validateCargo);
+cargoInput.addEventListener('input', validateCargo);
+
+// ---------- Create Trip ----------
+createBtn.addEventListener('click', async () => {
+  const source = sourceInput.value.trim();
+  const destination = destInput.value.trim();
+  const vehicleId = vehicleSelect.value;
+  const driverId = driverSelect.value;
+  const cargo = Number(cargoInput.value);
+  const distance = Number(distanceInput.value);
+
+  if (!source || !destination || !vehicleId || !driverId || !cargo || !distance){
+    showBanner('Please fill in all fields.');
+    return;
+  }
+  if (!validateCargo()){
+    showBanner('Cargo weight exceeds vehicle max load capacity.');
+    return;
+  }
+
+  const vehicle = vehicles.find(v => v.id === vehicleId);
+  const driver = drivers.find(d => d.id === driverId);
+
+  createBtn.disabled = true;
+  createBtn.textContent = 'Creating…';
+
+  try {
+    await db.collection('trips').add({
+      source, destination,
+      vehicle_id: vehicleId,
+      vehicle_name: `${vehicle.name} (${vehicle.reg_no})`,
+      driver_id: driverId,
+      driver_name: driver.name,
+      cargo_weight: cargo,
+      planned_distance: distance,
+      status: 'Draft',
+      created_at: new Date().toISOString()
+    });
+    showBanner('Trip created as Draft.', true);
+    sourceInput.value = '';
+    destInput.value = '';
+    cargoInput.value = '';
+    distanceInput.value = '';
+    vehicleSelect.value = '';
+    driverSelect.value = '';
+  } catch (err){
+    showBanner('Error creating trip: ' + err.message);
+  } finally {
+    createBtn.disabled = false;
+    createBtn.textContent = 'Create Trip';
+  }
+});
+
+// ---------- Dispatch a trip: vehicle + driver -> On Trip ----------
+async function dispatchTrip(tripId){
+  const trip = trips.find(t => t.id === tripId);
+  if (!trip) return;
+
+  const vehicle = vehicles.find(v => v.id === trip.vehicle_id);
+  const driver = drivers.find(d => d.id === trip.driver_id);
+
+  if (!vehicle || vehicle.status !== 'Available'){
+    showBanner('Vehicle is no longer available.'); return;
+  }
+  if (!driver || driver.status !== 'Available'){
+    showBanner('Driver is no longer available.'); return;
+  }
+
+  const batch = db.batch();
+  batch.update(db.collection('trips').doc(tripId), { status: 'Dispatched', dispatched_at: new Date().toISOString() });
+  batch.update(db.collection('vehicles').doc(trip.vehicle_id), { status: 'On Trip' });
+  batch.update(db.collection('drivers').doc(trip.driver_id), { status: 'On Trip' });
+
+  try {
+    await batch.commit();
+    showBanner('Trip dispatched — vehicle & driver set to On Trip.', true);
+  } catch (err){
+    showBanner('Error dispatching: ' + err.message);
+  }
+}
+
+// ---------- Complete a trip: vehicle + driver -> Available ----------
+async function completeTrip(tripId){
+  const trip = trips.find(t => t.id === tripId);
+  if (!trip) return;
+
+  const batch = db.batch();
+  batch.update(db.collection('trips').doc(tripId), { status: 'Completed' });
+  batch.update(db.collection('vehicles').doc(trip.vehicle_id), { status: 'Available' });
+  batch.update(db.collection('drivers').doc(trip.driver_id), { status: 'Available' });
+
+  try {
+    await batch.commit();
+    showBanner('Trip completed — vehicle & driver back to Available.', true);
+  } catch (err){
+    showBanner('Error completing: ' + err.message);
+  }
+}
+
+// ---------- Cancel a trip ----------
+async function cancelTrip(tripId){
+  const trip = trips.find(t => t.id === tripId);
+  if (!trip) return;
+
+  const wasDispatched = trip.status === 'Dispatched';
+  const batch = db.batch();
+  batch.update(db.collection('trips').doc(tripId), { status: 'Cancelled' });
+
+  if (wasDispatched){
+    batch.update(db.collection('vehicles').doc(trip.vehicle_id), { status: 'Available' });
+    batch.update(db.collection('drivers').doc(trip.driver_id), { status: 'Available' });
+  }
+
+  try {
+    await batch.commit();
+    showBanner('Trip cancelled.', true);
+  } catch (err){
+    showBanner('Error cancelling: ' + err.message);
+  }
+}
+
+// =========================================================
+// LIVE TRACKING MODAL (map, km driven, ETA, issue flag)
+// =========================================================
+let tripMap = null;
+let tripMarker = null;
+let tripLine = null;
+let activeModalTripId = null;
+let modalInterval = null;
+
+// Rough coordinates for common city/place keywords.
+// Falls back to Mumbai/Pune pair if nothing matches, so the
+// map always has something sensible to show.
+const CITY_COORDS = {
+  mumbai: [19.0760, 72.8777],
+  pune:   [18.5204, 73.8567],
+  nashik: [19.9975, 73.7898],
+  delhi:  [28.6139, 77.2090],
+  bangalore: [12.9716, 77.5946],
+  bengaluru: [12.9716, 77.5946],
+  chennai: [13.0827, 80.2707],
+  hyderabad: [17.3850, 78.4867],
+  kolkata: [22.5726, 88.3639],
+  ahmedabad: [23.0225, 72.5714],
+  jaipur: [26.9124, 75.7873],
+  surat: [21.1702, 72.8311],
+  lucknow: [26.8467, 80.9462],
+  indore: [22.7196, 75.8577]
+};
+
+function guessCoords(placeText){
+  const t = (placeText || '').toLowerCase();
+  for (const key in CITY_COORDS){
+    if (t.includes(key)) return CITY_COORDS[key];
+  }
+  return null;
+}
+
+const AVG_SPEED_KMH = 40; // assumed average speed for simulated progress
+
+function computeTripProgress(trip){
+  const planned = Number(trip.planned_distance) || 0;
+  let kmDriven = 0;
+  let etaHours = null;
+  let fraction = 0;
+
+  if (trip.status === 'Draft'){
+    kmDriven = 0;
+    etaHours = planned > 0 ? planned / AVG_SPEED_KMH : null;
+    fraction = 0;
+  } else if (trip.status === 'Dispatched'){
+    const startedAt = trip.dispatched_at ? new Date(trip.dispatched_at) : new Date(trip.created_at);
+    const elapsedHours = Math.max(0, (Date.now() - startedAt.getTime()) / 3600000);
+    kmDriven = Math.min(planned, elapsedHours * AVG_SPEED_KMH);
+    fraction = planned > 0 ? kmDriven / planned : 0;
+    etaHours = planned > 0 ? Math.max(0, (planned - kmDriven) / AVG_SPEED_KMH) : null;
+  } else if (trip.status === 'Completed'){
+    kmDriven = planned;
+    fraction = 1;
+    etaHours = 0;
+  } else if (trip.status === 'Cancelled'){
+    // freeze wherever it last was — approximate using elapsed time up to cancellation is unknown,
+    // so just show 0 progress with a clear cancelled state
+    kmDriven = 0;
+    fraction = 0;
+    etaHours = null;
+  }
+
+  return { kmDriven: Math.round(kmDriven), etaHours, fraction: Math.min(1, fraction) };
+}
+
+function formatEta(hours){
+  if (hours == null) return '—';
+  if (hours <= 0) return 'Arrived';
+  const h = Math.floor(hours);
+  const m = Math.round((hours - h) * 60);
+  return h > 0 ? `${h}h ${m}m` : `${m}m`;
+}
+
+function openModal(tripId){
+  const trip = trips.find(t => t.id === tripId);
+  if (!trip) return;
+
+  activeModalTripId = tripId;
+  document.getElementById('modalTitle').textContent = `${trip.source} → ${trip.destination}`;
+  document.getElementById('modalOverlay').classList.add('show');
+
+  // init map once, then just update it
+  setTimeout(() => {
+    if (!tripMap){
+      tripMap = L.map('tripMap');
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(tripMap);
+    }
+    renderModalContent();
+  }, 50);
+
+  if (modalInterval) clearInterval(modalInterval);
+  modalInterval = setInterval(renderModalContent, 5000); // refresh every 5s while open
+}
+
+function closeModal(){
+  document.getElementById('modalOverlay').classList.remove('show');
+  activeModalTripId = null;
+  if (modalInterval) { clearInterval(modalInterval); modalInterval = null; }
+}
+
+function renderModalContent(){
+  const trip = trips.find(t => t.id === activeModalTripId);
+  if (!trip) return;
+
+  const srcCoords = guessCoords(trip.source) || CITY_COORDS.mumbai;
+  const destCoords = guessCoords(trip.destination) || CITY_COORDS.pune;
+  const { kmDriven, etaHours, fraction } = computeTripProgress(trip);
+
+  const currentLat = srcCoords[0] + (destCoords[0] - srcCoords[0]) * fraction;
+  const currentLng = srcCoords[1] + (destCoords[1] - srcCoords[1]) * fraction;
+
+  // draw / update map
+  tripMap.setView([currentLat, currentLng], 7);
+  if (tripLine) tripMap.removeLayer(tripLine);
+  tripLine = L.polyline([srcCoords, destCoords], { color: '#4f7cff', weight: 3, dashArray: '6 6' }).addTo(tripMap);
+
+  if (tripMarker) tripMap.removeLayer(tripMarker);
+  tripMarker = L.marker([currentLat, currentLng]).addTo(tripMap)
+    .bindPopup(`${trip.vehicle_name || 'Vehicle'}<br>${trip.status}`);
+
+  L.marker(srcCoords, { opacity: 0.6 }).addTo(tripMap).bindTooltip(trip.source, { permanent:false });
+  // (cast a fresh layer group would be cleaner, but for a hackathon this keeps it simple)
+
+  document.getElementById('progressFill').style.width = (fraction * 100).toFixed(0) + '%';
+  document.getElementById('statKmDriven').textContent =
+    `${kmDriven} / ${trip.planned_distance != null ? trip.planned_distance : '—'} km`;
+  document.getElementById('statEta').textContent = formatEta(etaHours);
+  document.getElementById('statStatus').textContent = trip.status;
+
+  const flagged = !!trip.issue_flagged;
+  const statusEl = document.getElementById('issueStatusText');
+  const btnEl = document.getElementById('issueToggleBtn');
+  if (flagged){
+    statusEl.textContent = 'Issue flagged';
+    statusEl.className = 'issue-status flagged';
+    btnEl.textContent = 'Clear flag';
+  } else {
+    statusEl.textContent = 'No issues flagged';
+    statusEl.className = 'issue-status ok';
+    btnEl.textContent = 'Flag issue';
+  }
+}
+
+async function toggleIssueFlag(){
+  const trip = trips.find(t => t.id === activeModalTripId);
+  if (!trip) return;
+  try {
+    await db.collection('trips').doc(trip.id).update({ issue_flagged: !trip.issue_flagged });
+  } catch (err){
+    showBanner('Error updating flag: ' + err.message);
+  }
+}
+
+// ---------- Init ----------
+loadVehicles();
+loadDrivers();
+loadTrips();
+</script>
+</body>
+</html>
