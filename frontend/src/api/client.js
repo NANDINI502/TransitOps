@@ -152,4 +152,8 @@ export const chatApi = {
   send: (messages) => post('/chat', { messages }),
 };
 
+export const riskApi = {
+  predictTrip: (payload) => post('/risk/predict-trip', payload),
+};
+
 export { BASE_URL };

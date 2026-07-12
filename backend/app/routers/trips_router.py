@@ -110,6 +110,8 @@ def list_trips(
 def create_trip(body: TripCreate, user: CurrentUser = Depends(require_module_access("trips", "full"))):
     vehicle = fetch_vehicle(body.vehicle_id)
     driver = fetch_driver(body.driver_id)
+    check_vehicle_can_dispatch(vehicle)
+    check_driver_can_dispatch(driver)
     check_cargo_fits(body.cargo_weight_kg, vehicle)
 
     data = body.model_dump()

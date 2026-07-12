@@ -127,8 +127,8 @@ export default function Dashboard() {
             emptyText="No recent trips."
             columns={[
               { key: 'trip_no', header: 'Trip#', render: (r) => r.trip_no || r.id },
-              { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_name || r.vehicle || '—' },
-              { key: 'driver', header: 'Driver', render: (r) => r.driver_name || r.driver || '—' },
+              { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_name || r.vehicle || '—', sortValue: (r) => r.vehicle_name || r.vehicle || '' },
+              { key: 'driver', header: 'Driver', render: (r) => r.driver_name || r.driver || '—', sortValue: (r) => r.driver_name || r.driver || '' },
               { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status} /> },
               { key: 'eta', header: 'ETA', render: (r) => r.eta || '—' },
             ]}

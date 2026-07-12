@@ -4,7 +4,7 @@ import PageHeader from '../components/PageHeader';
 import StatusPill from '../components/StatusPill';
 import Button from '../components/Button';
 import Modal from '../components/Modal';
-import { tripsApi, vehiclesApi, driversApi, ApiError } from '../api/client';
+import { tripsApi, vehiclesApi, driversApi, riskApi, ApiError } from '../api/client';
 import { useAuth } from '../context/AuthContext';
 import { canEdit } from '../lib/roles';
 import './Trips.css';
@@ -77,6 +77,50 @@ export default function Trips() {
   const capacityExceeded = capacity != null && cargoWeight > capacity;
   const overBy = capacityExceeded ? cargoWeight - capacity : 0;
 
+  const [risk, setRisk] = useState(null);
+  const [riskLoading, setRiskLoading] = useState(false);
+  const [riskError, setRiskError] = useState(null);
+
+  const riskReady =
+    form.vehicle_id && form.driver_id && cargoWeight > 0 && Number(form.planned_distance_km) > 0 && !capacityExceeded;
+
+  useEffect(() => {
+    if (!riskReady) {
+      setRisk(null);
+      setRiskError(null);
+      return;
+    }
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      setRiskLoading(true);
+      setRiskError(null);
+      try {
+        const result = await riskApi.predictTrip({
+          vehicle_id: form.vehicle_id,
+          driver_id: form.driver_id,
+          cargo_weight_kg: cargoWeight,
+          planned_distance_km: Number(form.planned_distance_km) || 0,
+          source: form.source.trim() || null,
+          destination: form.destination.trim() || null,
+        });
+        if (!cancelled) setRisk(result);
+      } catch (err) {
+        if (!cancelled) {
+          setRisk(null);
+          setRiskError(err instanceof ApiError ? err.detail || err.message : 'Risk prediction failed.');
+        }
+      } finally {
+        if (!cancelled) setRiskLoading(false);
+      }
+    }, 600);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [riskReady, form.vehicle_id, form.driver_id, cargoWeight, form.planned_distance_km, form.source, form.destination]);
+
+  const riskLevelClass = risk ? `risk-panel--${risk.risk_level.toLowerCase()}` : '';
+
   const canSubmit =
     editable &&
     form.source.trim() &&
@@ -102,6 +146,7 @@ export default function Trips() {
         planned_distance_km: Number(form.planned_distance_km) || 0,
       });
       setForm(emptyForm);
+      setRisk(null);
       setLastCreatedId(created?.id ?? null);
       load();
     } catch (err) {
@@ -273,6 +318,38 @@ export default function Trips() {
                 <div className="error-banner">
                   Vehicle Capacity: {capacity} kg / Cargo Weight: {cargoWeight} kg / Capacity exceeded by {overBy} kg —
                   dispatch blocked
+                </div>
+              ) : null}
+
+              {riskReady && (riskLoading || risk || riskError) ? (
+                <div className={`risk-panel ${riskLevelClass}`}>
+                  {riskLoading ? (
+                    <div className="risk-panel__loading">
+                      <div className="spinner" /> Assessing trip risk…
+                    </div>
+                  ) : riskError ? (
+                    <div className="risk-panel__error">{riskError}</div>
+                  ) : risk ? (
+                    <>
+                      <div className="risk-panel__header">
+                        <span className="risk-panel__label">AI Risk Assessment</span>
+                        <span className="risk-panel__badge">
+                          {risk.risk_level} · {risk.risk_score}/100
+                        </span>
+                      </div>
+                      <div className="risk-panel__bar">
+                        <div className="risk-panel__bar-fill" style={{ width: `${risk.risk_score}%` }} />
+                      </div>
+                      <p className="risk-panel__summary">{risk.summary}</p>
+                      {risk.factors?.length ? (
+                        <ul className="risk-panel__factors">
+                          {risk.factors.map((f, i) => (
+                            <li key={i}>{f}</li>
+                          ))}
+                        </ul>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
               ) : null}
 

@@ -186,6 +186,7 @@ export default function Drivers() {
                 {
                   key: 'actions',
                   header: '',
+                  sortable: false,
                   render: (r) => (
                     <button className="link-btn" onClick={() => openEdit(r)}>
                       Edit

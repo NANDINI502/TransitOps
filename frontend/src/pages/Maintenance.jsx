@@ -187,7 +187,7 @@ export default function Maintenance() {
             rows={visibleRecords}
             emptyText={records.length === 0 ? 'No service records yet.' : 'No records match your search.'}
             columns={[
-              { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_name || vehicleLabel(r.vehicle_id) },
+              { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_name || vehicleLabel(r.vehicle_id), sortValue: (r) => r.vehicle_name || vehicleLabel(r.vehicle_id) },
               { key: 'service_type', header: 'Service' },
               { key: 'cost', header: 'Cost', align: 'right', render: (r) => (r.cost != null ? `₹${Number(r.cost).toLocaleString()}` : '—') },
               { key: 'status', header: 'Status', render: (r) => <StatusPill status={r.status === 'Active' ? 'In Shop' : r.status} /> },
@@ -196,6 +196,7 @@ export default function Maintenance() {
                     {
                       key: 'actions',
                       header: '',
+                      sortable: false,
                       render: (r) =>
                         r.status === 'Active' ? (
                           <button className="link-btn" disabled={busyId === r.id} onClick={() => closeRecord(r)}>

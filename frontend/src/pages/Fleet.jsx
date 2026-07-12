@@ -191,6 +191,7 @@ export default function Fleet() {
                 {
                   key: 'actions',
                   header: '',
+                  sortable: false,
                   render: (r) => (
                     <button className="link-btn" onClick={() => openEdit(r)}>
                       Edit

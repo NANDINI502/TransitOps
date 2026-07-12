@@ -15,6 +15,7 @@ from app.routers import (
     expenses_router,
     fuel_logs_router,
     maintenance_router,
+    risk_router,
     trips_router,
     vehicles_router,
 )
@@ -41,6 +42,7 @@ app.include_router(expenses_router.router)
 app.include_router(dashboard_router.router)
 app.include_router(analytics_router.router)
 app.include_router(chat_router.router)
+app.include_router(risk_router.router)
 
 
 @app.get("/api/health")

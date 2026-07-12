@@ -180,6 +180,8 @@ def tool_create_trip(user: CurrentUser, source: str, destination: str, vehicle: 
         return {"error": str(exc)}
 
     try:
+        check_vehicle_can_dispatch(vehicle_doc)
+        check_driver_can_dispatch(driver_doc)
         check_cargo_fits(body.cargo_weight_kg, vehicle_doc)
     except HTTPException as exc:
         return {"error": exc.detail}

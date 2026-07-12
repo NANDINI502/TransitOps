@@ -169,7 +169,7 @@ export default function FuelExpenses() {
           rows={visibleFuelLogs}
           emptyText={fuelLogs.length === 0 ? 'No fuel logs yet.' : 'No fuel logs match your search.'}
           columns={[
-            { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
+            { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id), sortValue: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
             { key: 'date', header: 'Date', render: (r) => (r.date || '').slice(0, 10) },
             { key: 'liters', header: 'Liters', align: 'right', render: (r) => `${r.liters} L` },
             { key: 'cost', header: 'Fuel Cost', align: 'right', render: (r) => `₹${Number(r.cost || 0).toLocaleString()}` },
@@ -184,8 +184,8 @@ export default function FuelExpenses() {
           rows={visibleExpenses}
           emptyText={expenses.length === 0 ? 'No expenses logged yet.' : 'No expenses match your search.'}
           columns={[
-            { key: 'trip', header: 'Trip', render: (r) => r.trip_no || tripLabel(r.trip_id) },
-            { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
+            { key: 'trip', header: 'Trip', render: (r) => r.trip_no || tripLabel(r.trip_id), sortValue: (r) => r.trip_no || tripLabel(r.trip_id) },
+            { key: 'vehicle', header: 'Vehicle', render: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id), sortValue: (r) => r.vehicle_reg_no || vehicleLabel(r.vehicle_id) },
             { key: 'category', header: 'Category', render: (r) => EXPENSE_CATEGORY_LABELS[r.category] || r.category },
             { key: 'date', header: 'Date', render: (r) => (r.date || '').slice(0, 10) },
             { key: 'amount', header: 'Amount', align: 'right', render: (r) => `₹${Number(r.amount || 0).toLocaleString()}` },
