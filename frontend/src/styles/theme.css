@@ -1,0 +1,148 @@
+:root {
+  --bg-app: #0d0d0d;
+  --bg-panel: #161616;
+  --bg-panel-alt: #1b1b1b;
+  --bg-elevated: #202020;
+  --bg-hover: #262626;
+  --border-subtle: #2e2e2e;
+  --border-strong: #3a3a3a;
+
+  --text-primary: #e8e8e8;
+  --text-secondary: #a3a3a3;
+  --text-muted: #737373;
+
+  --accent: #e08a3c;
+  --accent-strong: #f0983f;
+  --accent-soft: rgba(224, 138, 60, 0.15);
+
+  --status-green: #4caf50;
+  --status-green-soft: rgba(76, 175, 80, 0.16);
+  --status-blue: #4a90d9;
+  --status-blue-soft: rgba(74, 144, 217, 0.16);
+  --status-amber: #e08a3c;
+  --status-amber-soft: rgba(224, 138, 60, 0.16);
+  --status-red: #e05c5c;
+  --status-red-soft: rgba(224, 92, 92, 0.16);
+  --status-gray: #8f8f8f;
+  --status-gray-soft: rgba(143, 143, 143, 0.16);
+
+  --sidebar-width: 212px;
+  --topbar-height: 60px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --shadow-elevated: 3px 3px 0 rgba(0, 0, 0, 0.5);
+
+  --font-sketch: 'Architects Daughter', 'Kalam', 'Comic Sans MS', cursive;
+  --sketch-border: 1.5px solid var(--border-strong);
+  --sketch-shadow: 2px 2px 0 rgba(0, 0, 0, 0.35);
+  --sketch-shadow-lg: 4px 4px 0 rgba(0, 0, 0, 0.4);
+
+  font-family: var(--font-sketch);
+  color-scheme: dark;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg-app);
+  color: var(--text-primary);
+}
+
+body {
+  font-family: var(--font-sketch);
+  -webkit-font-smoothing: antialiased;
+}
+
+.stat-card,
+.data-table,
+.data-table__wrap,
+.modal-panel,
+.filter-bar,
+.sidebar,
+.status-pill,
+.btn,
+input,
+select,
+textarea {
+  border-radius: 7px !important;
+}
+
+.stat-card,
+.data-table__wrap,
+.modal-panel,
+.btn,
+.status-pill {
+  box-shadow: var(--sketch-shadow);
+  border-width: 1.5px !important;
+}
+
+.stat-card {
+  transform: rotate(-0.15deg);
+}
+
+.stat-card:nth-child(even) {
+  transform: rotate(0.15deg);
+}
+
+.sidebar {
+  box-shadow: var(--sketch-shadow-lg);
+}
+
+.modal-panel {
+  box-shadow: var(--sketch-shadow-lg);
+}
+
+.btn:active {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font-family: inherit;
+}
+
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-app);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 6px;
+}
+
+.text-muted {
+  color: var(--text-muted);
+}
+
+.text-secondary {
+  color: var(--text-secondary);
+}
+
+.mono {
+  font-variant-numeric: tabular-nums;
+}
